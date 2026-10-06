@@ -253,7 +253,7 @@ def enroll(authorization: str = Header(default=''), db: Session = Depends(db_ses
     secret = cipher.decrypt(user.secret.encode()).decode()
     uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=os.getenv('TOTP_ISSUER', 'Keyclock'))
     buffer = io.BytesIO()
-    qrcode.make(uri).save(buffer, format='PNG')
+    qrcode.make(uri).save(buffer, kind='PNG')
     return {'secret': secret, 'qr': 'data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode()}
 
 

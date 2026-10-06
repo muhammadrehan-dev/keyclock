@@ -22,6 +22,7 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -35,7 +36,7 @@ export default function Home() {
       .catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  function change(next: Step) { setStep(next); setError(''); setCode(''); }
+  function change(next: Step) { setStep(next); setError(''); setCode(''); setShowPassword(false); }
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
@@ -101,7 +102,7 @@ export default function Home() {
               {credentials ? <>
                 {step === 'signup' && <><label htmlFor="name">Name</label><input id="name" name="name" type="text" autoComplete="name" placeholder="Your name" maxLength={100} required value={name} onChange={e => setName(e.target.value)} /></>}
                 <label htmlFor="email">Email address</label><input id="email" type="email" autoComplete="username" placeholder="you@example.com" maxLength={254} required value={email} onChange={e => setEmail(e.target.value)} />
-                <label htmlFor="password">Password</label><input id="password" type="password" autoComplete={step === 'signup' ? 'new-password' : 'current-password'} minLength={12} maxLength={128} placeholder="At least 12 characters" required value={password} onChange={e => setPassword(e.target.value)} />
+                <label htmlFor="password">Password</label><div className="password-field"><input id="password" type={showPassword ? 'text' : 'password'} autoComplete={step === 'signup' ? 'new-password' : 'current-password'} minLength={12} maxLength={128} placeholder="At least 12 characters" required value={password} onChange={e => setPassword(e.target.value)} /><button type="button" className="password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="password" onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</button></div>
                 <p className="field-note">{step === 'signup' ? 'Use a unique password with at least 12 characters.' : 'Next, we’ll ask for your authenticator code.'}</p>
               </> : <>
                 {step === 'enroll' && (enrollment ? <div className="enrollment"><img src={enrollment.qr} alt="Scan to add this account to your authenticator" width={220} height={220} /><details><summary>Can’t scan? Enter a setup key</summary><code>{enrollment.secret}</code><p>Choose a time-based code: 6 digits, 30 seconds, SHA-1.</p></details></div> : <button type="button" className="text-button" onClick={async () => { setBusy(true); setError(''); try { setEnrollment(await api('enroll')); } catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); } finally { setBusy(false); } }}>Load setup QR code</button>)}
