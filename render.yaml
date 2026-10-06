@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: keyclock-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.14
+      - key: DATABASE_URL
+        fromDatabase:
+          name: keyclock-db
+          property: connectionString
+      - key: INTERNAL_API_KEY
+        generateValue: true
+      - key: TOTP_ENCRYPTION_KEY
+        sync: false
+      - key: TOTP_ISSUER
+        value: Keyclock
+databases:
+  - name: keyclock-db
+    databaseName: keyclock
+    user: keyclock
