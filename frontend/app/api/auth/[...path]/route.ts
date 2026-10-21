@@ -5,6 +5,8 @@ const allowed: Record<string, string[]> = {
   'enroll/confirm': ['POST'], verify: ['POST'], me: ['GET'], logout: ['POST'],
   messages: ['GET', 'POST'],
   users: ['GET'],
+  keys: ['GET', 'POST'],
+  'reset-password': ['POST'],
 };
 const cookie = 'keyclock_session';
 
@@ -28,11 +30,12 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       return NextResponse.json({ detail: 'JSON required.' }, { status: 415 });
     }
     body = await request.text();
-    if (body.length > (path === 'messages' ? 16384 : 4096)) return NextResponse.json({ detail: 'Request too large.' }, { status: 413 });
+    if (body.length > (path === 'messages' || path === 'keys' ? 32768 : 4096)) return NextResponse.json({ detail: 'Request too large.' }, { status: 413 });
   }
   try {
     const query = new URLSearchParams();
     if (path === 'users' && request.nextUrl.searchParams.has('after')) query.set('after', request.nextUrl.searchParams.get('after')!);
+    if (path === 'keys' && request.nextUrl.searchParams.has('email')) query.set('email', request.nextUrl.searchParams.get('email')!);
     const upstream = await fetch(`${backend.replace(/\/$/, '')}/auth/${path}${query.size ? `?${query}` : ''}`, {
       method: request.method,
       headers: {

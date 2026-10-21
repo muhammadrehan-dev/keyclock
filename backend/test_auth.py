@@ -5,6 +5,7 @@ from cryptography.fernet import Fernet
 os.environ['INTERNAL_API_KEY'] = 'test-api-key-' + 'x' * 32
 os.environ['TOTP_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
 os.environ['DATABASE_URL'] = 'sqlite://'
+os.environ['REQUIRED_EMAIL_DOMAIN'] = ''
 
 import pyotp
 import pytest
@@ -232,7 +233,7 @@ def test_messages_require_full_authentication(client, monkeypatch):
 def test_message_validation_and_send_limit(client):
     tokens = message_accounts()
     sender = headers(tokens['Alice'])
-    for body in ['', '  ', 'x' * 2001]:
+    for body in ['', '  ', 'x' * 8193]:
         assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@example.com', 'body': body}).status_code == 422
     assert client.post('/auth/messages', headers=sender, json={'recipient': 'alice@example.com', 'body': 'hello'}).status_code == 400
     assert client.post('/auth/messages', headers=sender, json={'recipient': 'missing@example.com', 'body': 'hello'}).status_code == 404
@@ -296,3 +297,74 @@ def test_registered_users_pagination(client):
     assert len(second['users']) == 5 and second['next_cursor'] is None
     assert not ({u['id'] for u in first['users']} & {u['id'] for u in second['users']})
     assert client.get('/auth/users?after=-1', headers=headers(tokens['Alice'])).status_code == 422
+
+
+def test_e2ee_keys_and_dual_envelope(client):
+    tokens = message_accounts()
+    alice = headers(tokens['Alice'])
+    bob = headers(tokens['Bob'])
+
+    # Initially Alice has no keys
+    me = client.get('/auth/me', headers=alice).json()
+    assert not me['has_keys']
+    assert client.get('/auth/keys', headers=alice).json() == {'public_key': '', 'encrypted_private_key': ''}
+
+    # Save keys for Alice and Bob
+    alice_pub = '{"kty":"RSA","n":"alice-key"}'
+    alice_priv = '{"v":1,"ct":"encrypted-alice-private-key"}'
+    bob_pub = '{"kty":"RSA","n":"bob-key"}'
+    bob_priv = '{"v":1,"ct":"encrypted-bob-private-key"}'
+
+    assert client.post('/auth/keys', headers=alice, json={'public_key': alice_pub, 'encrypted_private_key': alice_priv}).status_code == 200
+    assert client.post('/auth/keys', headers=bob, json={'public_key': bob_pub, 'encrypted_private_key': bob_priv}).status_code == 200
+
+    # Verify /auth/me reflects has_keys
+    assert client.get('/auth/me', headers=alice).json()['has_keys']
+
+    # Alice fetches Bob's public key
+    bob_key_res = client.get('/auth/keys', params={'email': 'bob@example.com'}, headers=alice)
+    assert bob_key_res.status_code == 200
+    assert bob_key_res.json()['public_key'] == bob_pub
+
+    # Querying missing user gives 404
+    assert client.get('/auth/keys', params={'email': 'missing@example.com'}, headers=alice).status_code == 404
+
+    # Alice sends dual-envelope E2EE message (body for Bob, sender_body for Alice)
+    send_res = client.post('/auth/messages', headers=alice, json={
+        'recipient': 'bob@example.com',
+        'body': 'E2EE:encrypted-for-bob',
+        'sender_body': 'E2EE:encrypted-for-alice',
+    })
+    assert send_res.status_code == 201
+
+    # Bob's inbox should receive the body encrypted for Bob
+    bob_box = client.get('/auth/messages', headers=bob).json()
+    assert bob_box['inbox'][0]['body'] == 'E2EE:encrypted-for-bob'
+
+    # Alice's sent folder should receive the sender_body encrypted for Alice
+    alice_box = client.get('/auth/messages', headers=alice).json()
+    assert alice_box['sent'][0]['body'] == 'E2EE:encrypted-for-alice'
+
+
+def test_domain_restriction_and_password_reset(client, monkeypatch):
+    monkeypatch.setenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk')
+    
+    # Registration with wrong domain should be rejected
+    res = client.post('/auth/signup', json={'name': 'Bad Domain', 'email': 'hacker@other.com', 'password': 'testpassword123'})
+    assert res.status_code == 400
+    assert 'Only @students.duet.edu.pk' in res.json()['detail']
+
+    # Registration with DUET domain succeeds
+    res_ok = client.post('/auth/signup', json={'name': 'DUET Student', 'email': 'student@students.duet.edu.pk', 'password': 'testpassword123'})
+    assert res_ok.status_code == 201
+
+    # Reset password works
+    reset_res = client.post('/auth/reset-password', json={'email': 'student@students.duet.edu.pk', 'password': 'newpassword12345'})
+    assert reset_res.status_code == 200
+
+    # Old password fails
+    assert client.post('/auth/login', json={'email': 'student@students.duet.edu.pk', 'password': 'testpassword123'}).status_code == 401
+
+    # New password succeeds
+    assert client.post('/auth/login', json={'email': 'student@students.duet.edu.pk', 'password': 'newpassword12345'}).status_code == 200
+

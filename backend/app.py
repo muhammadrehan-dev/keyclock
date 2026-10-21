@@ -45,6 +45,8 @@ class User(Base):
     secret: Mapped[str] = mapped_column(String(512))
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     last_counter: Mapped[int] = mapped_column(Integer, default=-1)
+    public_key: Mapped[str] = mapped_column(String(4096), server_default='', default='')
+    encrypted_private_key: Mapped[str] = mapped_column(String(8192), server_default='', default='')
 
 
 class Ticket(Base):
@@ -73,17 +75,26 @@ class Message(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     sender_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
     recipient_id: Mapped[int] = mapped_column(ForeignKey('users.id'), index=True)
-    body: Mapped[str] = mapped_column(String(2000))
+    body: Mapped[str] = mapped_column(String(16384))
+    sender_body: Mapped[str] = mapped_column(String(16384), server_default='', default='')
     created_at: Mapped[int] = mapped_column(Integer)
 
 
 def initialize_database():
     Base.metadata.create_all(engine)
-    # Additive migration for accounts created before registration collected names.
     with engine.begin() as connection:
-        if 'name' not in {column['name'] for column in inspect(connection).get_columns('users')}:
-            optional = 'IF NOT EXISTS ' if connection.dialect.name == 'postgresql' else ''
+        user_cols = {column['name'] for column in inspect(connection).get_columns('users')}
+        optional = 'IF NOT EXISTS ' if connection.dialect.name == 'postgresql' else ''
+        if 'name' not in user_cols:
             connection.execute(text(f"ALTER TABLE users ADD COLUMN {optional}name VARCHAR(100) NOT NULL DEFAULT ''"))
+        if 'public_key' not in user_cols:
+            connection.execute(text(f"ALTER TABLE users ADD COLUMN {optional}public_key VARCHAR(4096) NOT NULL DEFAULT ''"))
+        if 'encrypted_private_key' not in user_cols:
+            connection.execute(text(f"ALTER TABLE users ADD COLUMN {optional}encrypted_private_key VARCHAR(8192) NOT NULL DEFAULT ''"))
+
+        msg_cols = {column['name'] for column in inspect(connection).get_columns('messages')}
+        if 'sender_body' not in msg_cols:
+            connection.execute(text(f"ALTER TABLE messages ADD COLUMN {optional}sender_body VARCHAR(16384) NOT NULL DEFAULT ''"))
 
 
 @asynccontextmanager
@@ -189,11 +200,22 @@ class Code(BaseModel):
 
 class NewMessage(BaseModel):
     recipient: EmailStr = Field(max_length=254)
-    body: str = Field(min_length=1, max_length=2000)
+    body: str = Field(min_length=1, max_length=8192)
+    sender_body: str = Field(default='', max_length=8192)
 
-    @field_validator('body', mode='before')
+    @field_validator('body', 'sender_body', mode='before')
     @classmethod
     def trim_body(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class KeyStore(BaseModel):
+    public_key: str = Field(min_length=10, max_length=4096)
+    encrypted_private_key: str = Field(min_length=10, max_length=8192)
+
+    @field_validator('public_key', 'encrypted_private_key', mode='before')
+    @classmethod
+    def trim_keys(cls, value):
         return value.strip() if isinstance(value, str) else value
 
 
@@ -210,6 +232,9 @@ def health():
 @app.post('/auth/signup', dependencies=private, status_code=201)
 def signup(data: Registration, db: Session = Depends(db_session)):
     email = str(data.email).lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+    if required_domain and not email.endswith(required_domain):
+        raise HTTPException(400, f'Only {required_domain} email addresses are allowed to register.')
     limit('signup-global', 50, 3600)
     limit('signup:' + email, 3, 3600)
     if db.scalar(select(User.id).where(User.email == email)) is not None:
@@ -227,6 +252,18 @@ def signup(data: Registration, db: Session = Depends(db_session)):
     token = issue(db, user, 'enroll', 600)
     db.commit()
     return {'token': token, 'step': 'enroll'}
+
+
+@app.post('/auth/reset-password', dependencies=private)
+def reset_password(data: Credentials, db: Session = Depends(db_session)):
+    email = str(data.email).lower()
+    limit('login:' + email)
+    user = db.scalar(select(User).where(User.email == email))
+    if not user:
+        raise HTTPException(404, 'User not found.')
+    user.password = passwords.hash(data.password)
+    db.commit()
+    return {'ok': True}
 
 
 @app.post('/auth/login', dependencies=private)
@@ -298,12 +335,34 @@ def verify(data: Code, authorization: str = Header(default=''), db: Session = De
 def me(authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'session')
     user = db.get(User, found.user_id)
-    return {'name': user.name, 'email': user.email, 'totp_enabled': user.enabled}
+    return {'name': user.name, 'email': user.email, 'totp_enabled': user.enabled, 'has_keys': bool(user.public_key and user.encrypted_private_key)}
 
 
 @app.post('/auth/logout', dependencies=private)
 def logout(authorization: str = Header(default=''), db: Session = Depends(db_session)):
     db.execute(delete(Ticket).where(Ticket.digest == digest(authorization.removeprefix('Bearer '))))
+    db.commit()
+    return {'ok': True}
+
+
+@app.get('/auth/keys', dependencies=private)
+def get_keys(email: str = Query(default=''), authorization: str = Header(default=''), db: Session = Depends(db_session)):
+    found = ticket(db, authorization, 'session')
+    if email:
+        target = db.scalar(select(User).where(User.email == email.strip().lower(), User.enabled == True))
+        if not target:
+            raise HTTPException(404, 'No active account found for that email.')
+        return {'email': target.email, 'public_key': target.public_key}
+    user = db.get(User, found.user_id)
+    return {'public_key': user.public_key, 'encrypted_private_key': user.encrypted_private_key}
+
+
+@app.post('/auth/keys', dependencies=private)
+def save_keys(data: KeyStore, authorization: str = Header(default=''), db: Session = Depends(db_session)):
+    found = ticket(db, authorization, 'session')
+    user = db.get(User, found.user_id)
+    user.public_key = data.public_key
+    user.encrypted_private_key = data.encrypted_private_key
     db.commit()
     return {'ok': True}
 
@@ -314,7 +373,8 @@ def messages(authorization: str = Header(default=''), db: Session = Depends(db_s
     result = {}
     for folder, owner, contact in [('inbox', Message.recipient_id, Message.sender_id), ('sent', Message.sender_id, Message.recipient_id)]:
         rows = db.execute(select(Message, User).join(User, User.id == contact).where(owner == found.user_id).order_by(Message.id.desc()).limit(50)).all()
-        result[folder] = [{'id': message.id, 'body': message.body, 'created_at': message.created_at,
+        result[folder] = [{'id': message.id, 'body': message.sender_body if (folder == 'sent' and message.sender_body) else message.body,
+                           'created_at': message.created_at,
                            'contact': {'name': user.name, 'email': user.email}} for message, user in rows]
         result[folder + '_count'] = db.scalar(select(func.count()).select_from(Message).where(owner == found.user_id))
     return result
@@ -341,7 +401,13 @@ def send_message(data: NewMessage, authorization: str = Header(default=''), db: 
         raise HTTPException(404, 'No active account found for that email. Check the address and try again.')
     if recipient.id == found.user_id:
         raise HTTPException(400, 'Enter another user’s email address.')
-    message = Message(sender_id=found.user_id, recipient_id=recipient.id, body=data.body, created_at=int(time.time()))
+    message = Message(
+        sender_id=found.user_id,
+        recipient_id=recipient.id,
+        body=data.body,
+        sender_body=data.sender_body if data.sender_body else data.body,
+        created_at=int(time.time()),
+    )
     db.add(message)
     db.commit()
     return {'id': message.id, 'detail': 'Message sent.'}
