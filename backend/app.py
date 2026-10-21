@@ -103,7 +103,7 @@ async def lifespan(app):
     yield
 
 
-app = FastAPI(title='Keyclock authentication', lifespan=lifespan)
+app = FastAPI(title='DUETCLOCK authentication', lifespan=lifespan)
 
 
 @app.middleware('http')
@@ -288,7 +288,7 @@ def enroll(authorization: str = Header(default=''), db: Session = Depends(db_ses
     if user.enabled:
         raise HTTPException(409, 'Authenticator already enabled.')
     secret = cipher.decrypt(user.secret.encode()).decode()
-    uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=os.getenv('TOTP_ISSUER', 'Keyclock'))
+    uri = pyotp.TOTP(secret).provisioning_uri(name=user.email, issuer_name=os.getenv('TOTP_ISSUER', 'DUETCLOCK'))
     buffer = io.BytesIO()
     qrcode.make(uri).save(buffer, kind='PNG')
     return {'secret': secret, 'qr': 'data:image/png;base64,' + base64.b64encode(buffer.getvalue()).decode()}

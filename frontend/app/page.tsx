@@ -242,7 +242,7 @@ export default function Home() {
 
   return <main>
     <header>
-      <a className="brand" href="/" aria-label="Keyclock home"><span className="brandmark">k</span>keyclock<span className="branddot">®</span></a>
+      <a className="brand" href="/" aria-label="DUETCLOCK home"><span className="brandmark">D</span>DUETCLOCK<span className="branddot">®</span></a>
       <span className="header-note"><span className="dot" /> DUET Student Portal • E2EE</span>
     </header>
     <div className="shell">

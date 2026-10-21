@@ -173,7 +173,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
 
   return <main className="dashboard">
     <header>
-      <a className="brand" href="/" aria-label="Keyclock home"><span className="brandmark">k</span>keyclock<span className="branddot">®</span></a>
+      <a className="brand" href="/" aria-label="DUETCLOCK home"><span className="brandmark">D</span>DUETCLOCK<span className="branddot">®</span></a>
       <div className="dashboard-user">
         <span className="avatar">{(name || email).slice(0, 1).toUpperCase()}</span>
         <span>{name || email}</span>
@@ -288,7 +288,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
         <div className="eyebrow">SAY HELLO</div>
         <h2 id="compose-title">Send a message.</h2>
         <div className="composer-e2ee-note"><span aria-hidden="true">🔒</span> End-to-end encrypted (only recipient and you can read)</div>
-        <p className="description">Reach another Keyclock member using their registered email address.</p>
+        <p className="description">Reach another DUET student using their registered @students.duet.edu.pk email address.</p>
         <form onSubmit={send}>
           <fieldset disabled={sending || busy}>
             <label htmlFor="recipient">Recipient email</label>

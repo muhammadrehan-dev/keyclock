@@ -17,4 +17,4 @@ services:
       - key: TOTP_ENCRYPTION_KEY
         sync: false
       - key: TOTP_ISSUER
-        value: Keyclock
+        value: DUETCLOCK

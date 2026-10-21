@@ -5,8 +5,8 @@ import './dashboard.css';
 import './members.css';
 
 export const metadata: Metadata = {
-  title: 'Keyclock · Your second layer',
-  description: 'Secure your account with time-based authenticator codes.',
+  title: 'DUETCLOCK · Secure Student E2EE Chat',
+  description: 'Exclusively for DUET students with end-to-end encryption and time-based authenticator codes.',
   robots: { index: false, follow: false },
 };
 

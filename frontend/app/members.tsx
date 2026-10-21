@@ -35,8 +35,8 @@ export default function Members({ onMessage, disabled }: { onMessage: (email: st
   }
 
   return <section className="dashboard-panel members-panel" aria-labelledby="members-title" aria-busy={loading}>
-    <div className="panel-heading"><h2 id="members-title">Registered users{directory ? ` (${directory.total})` : ''}</h2><button className="outline-button" disabled={loading} onClick={() => load()}>Refresh users</button></div>
-    <p className="description">Find someone on Keyclock and start a conversation.</p>
+    <div className="panel-heading"><h2 id="members-title">Registered students{directory ? ` (${directory.total})` : ''}</h2><button className="outline-button" disabled={loading} onClick={() => load()}>Refresh students</button></div>
+    <p className="description">Find another student on DUETCLOCK and start a conversation.</p>
     {error && <p className="error" role="alert">{error}</p>}
     {!directory && loading && <p role="status" className="mailbox-note">Loading registered users…</p>}
     {directory?.users.length === 0 && <p className="mailbox-note">No registered users yet.</p>}
