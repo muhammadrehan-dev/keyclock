@@ -121,7 +121,7 @@ export default function Home() {
         } catch (fbErr: unknown) {
           const code = (fbErr as { code?: string })?.code;
           if (code === 'auth/email-already-in-use') {
-            throw new Error('This email is already in use. Please sign in or use password reset.');
+            throw new Error('This email is already registered. Please switch to the "Sign in" tab to continue.');
           }
           throw new Error((fbErr as Error).message || 'Firebase registration failed.');
         }
@@ -163,10 +163,21 @@ export default function Home() {
         try {
           data = await api('login', { email: cleanEmail, password });
         } catch (loginErr: unknown) {
-          // If user recently reset password in Firebase, sync it to Keyclock backend
+          // If login failed, sync password or auto-provision student in Supabase
           if (loginErr instanceof Error && loginErr.message.includes('Incorrect email or password')) {
-            await api('reset-password', { email: cleanEmail, password });
-            data = await api('login', { email: cleanEmail, password });
+            try {
+              await api('reset-password', { email: cleanEmail, password });
+              data = await api('login', { email: cleanEmail, password });
+            } catch (resetErr: unknown) {
+              // If student exists and verified in Firebase but was missed by Supabase (e.g. Render cold start), auto-provision now
+              if (resetErr instanceof Error && (resetErr.message.includes('User not found') || resetErr.message.includes('404'))) {
+                const displayName = auth.currentUser?.displayName || 'DUET Student';
+                await api('signup', { name: displayName, email: cleanEmail, password });
+                data = await api('login', { email: cleanEmail, password });
+              } else {
+                throw resetErr;
+              }
+            }
           } else {
             throw loginErr;
           }

@@ -235,8 +235,8 @@ def signup(data: Registration, db: Session = Depends(db_session)):
     required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
     if required_domain and not email.endswith(required_domain):
         raise HTTPException(400, f'Only {required_domain} email addresses are allowed to register.')
-    limit('signup-global', 50, 3600)
-    limit('signup:' + email, 3, 3600)
+    limit('signup-global', 100, 3600)
+    limit('signup:' + email, 10, 3600)
     if db.scalar(select(User.id).where(User.email == email)) is not None:
         raise HTTPException(409, 'This email is already in use. Please sign in instead.')
     user = User(name=data.name, email=email, password=passwords.hash(data.password), secret=cipher.encrypt(pyotp.random_base32().encode()).decode())

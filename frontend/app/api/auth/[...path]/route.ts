@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 60;
+
 const allowed: Record<string, string[]> = {
   signup: ['POST'], login: ['POST'], enroll: ['GET'],
   'enroll/confirm': ['POST'], verify: ['POST'], me: ['GET'], logout: ['POST'],
@@ -42,7 +44,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
         'Content-Type': 'application/json', 'X-Internal-Key': key,
         Authorization: `Bearer ${request.cookies.get(cookie)?.value ?? ''}`,
       },
-      body, cache: 'no-store', signal: AbortSignal.timeout(20000), redirect: 'error',
+      body, cache: 'no-store', signal: AbortSignal.timeout(55000), redirect: 'error',
     });
     const data = await upstream.json();
     const token = data.token;

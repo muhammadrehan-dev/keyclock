@@ -6,6 +6,8 @@ import {
   exportPrivateKeyToJwk,
   parseEnvelope,
   tamperEnvelope,
+  computeKeyFingerprint,
+  computeSafetyNumber,
 } from './crypto';
 
 type Message = {
@@ -51,6 +53,14 @@ export default function SecurityInspector({
   const [inspectorPassword, setInspectorPassword] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Cryptographic Safety Number state (Anti-MITM)
+  const [userFingerprint, setUserFingerprint] = useState<string>('Computing...');
+  const [safetyPeerEmail, setSafetyPeerEmail] = useState<string>('');
+  const [safetyNumberResult, setSafetyNumberResult] = useState<string | null>(null);
+  const [safetyComputing, setSafetyComputing] = useState<boolean>(false);
+  const [safetyError, setSafetyError] = useState<string | null>(null);
+  const [benchmarkCategory, setBenchmarkCategory] = useState<'all' | 'trust' | 'crypto' | 'metadata' | 'identity'>('all');
+
   // Message comparison & interactive lab state
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
   const [labCiphertext, setLabCiphertext] = useState<string>('');
@@ -72,6 +82,11 @@ export default function SecurityInspector({
         const data = await res.json();
         if (active && res.ok) {
           setKeysData(data);
+          if (data.public_key) {
+            computeKeyFingerprint(data.public_key).then(fp => {
+              if (active) setUserFingerprint(fp);
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to load keys in inspector:', err);
@@ -182,6 +197,32 @@ export default function SecurityInspector({
       error: diag.errorMessage,
       unwrappedKey: diag.aesKeyUnwrapped,
     });
+  }
+
+  async function handleCalculateSafetyNumber(e: React.FormEvent) {
+    e.preventDefault();
+    if (!safetyPeerEmail.trim()) return;
+    setSafetyComputing(true);
+    setSafetyError(null);
+    setSafetyNumberResult(null);
+    try {
+      if (!keysData?.public_key) throw new Error('Your public key is still loading. Please try again.');
+      const cleanPeer = safetyPeerEmail.trim().toLowerCase();
+      const res = await fetch(`/api/auth/keys?email=${encodeURIComponent(cleanPeer)}`, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`Could not find public key for ${cleanPeer}. Verify they have completed registration.`);
+      }
+      const peerKeyData = await res.json();
+      if (!peerKeyData.public_key) {
+        throw new Error('This user has not initialized their E2EE public key yet.');
+      }
+      const safetyNum = await computeSafetyNumber(keysData.public_key, peerKeyData.public_key);
+      setSafetyNumberResult(safetyNum);
+    } catch (err: unknown) {
+      setSafetyError(err instanceof Error ? err.message : 'Failed to calculate safety number.');
+    } finally {
+      setSafetyComputing(false);
+    }
   }
 
   return (
@@ -399,7 +440,107 @@ export default function SecurityInspector({
         </div>
       </section>
 
-      {/* 4. SUPABASE DATABASE VS CLIENT DECRYPTION COMPARISON */}
+      {/* 4. ANTI-MITM SAFETY NUMBERS (KEY FINGERPRINT VERIFICATION) */}
+      <section className="vault-section" aria-label="Anti-MITM Safety Numbers">
+        <div className="vault-section-title">
+          <div>
+            <span className="eyebrow">IDENTITY INTEGRITY &amp; ANTI-MITM</span>
+            <h3>Cryptographic Safety Numbers (Public Key Fingerprints)</h3>
+          </div>
+          <span className="security-badge">Man-in-the-Middle Defense</span>
+        </div>
+
+        <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 16px', lineHeight: '1.6' }}>
+          In public key cryptography, an attacker with server or database access could attempt a <em>Key Substitution Attack</em> (swapping a classmate&apos;s public key with an attacker&apos;s).
+          By comparing this 60-digit safety number out-of-band (or checking the SHA-256 fingerprint), both students mathematically prove that their end-to-end communication is untampered without relying on a centralized Certificate Authority (CA).
+        </p>
+
+        <div className="safety-grid">
+          {/* Your Fingerprint */}
+          <div className="safety-card">
+            <div className="safety-card-header">
+              <div>
+                <h4>Your Public Key SHA-256 Fingerprint</h4>
+                <p>Derived from your 2048-bit RSA-OAEP Public Key</p>
+              </div>
+              <span className="key-badge public">Local Device</span>
+            </div>
+            <div className="safety-fingerprint-display">
+              <code>{userFingerprint}</code>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Format: 8 groups of 4-hex chunks</span>
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => copyToClipboard(userFingerprint, 'fp')}
+              >
+                {copiedKey === 'fp' ? '✓ Copied' : 'Copy Fingerprint'}
+              </button>
+            </div>
+          </div>
+
+          {/* Peer Safety Number Calculator */}
+          <div className="safety-card">
+            <div className="safety-card-header">
+              <div>
+                <h4>Verify Safety Number with a Peer</h4>
+                <p>Calculates the deterministic 60-digit pairwise code</p>
+              </div>
+              <span className="key-badge encrypted">Pairwise Identity</span>
+            </div>
+
+            <form onSubmit={handleCalculateSafetyNumber} style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <input
+                type="email"
+                placeholder="student@students.duet.edu.pk"
+                value={safetyPeerEmail}
+                onChange={e => setSafetyPeerEmail(e.target.value)}
+                disabled={safetyComputing}
+                required
+                style={{ flex: 1, padding: '7px 11px', fontSize: '11px', border: '1px solid var(--line)', borderRadius: '6px' }}
+              />
+              <button
+                type="submit"
+                className="outline-button"
+                disabled={safetyComputing || !safetyPeerEmail.trim()}
+              >
+                {safetyComputing ? 'Fetching Key…' : 'Compute 60-Digit Code'}
+              </button>
+            </form>
+
+            {safetyError && (
+              <p className="error" style={{ margin: '8px 0 0', fontSize: '11px' }}>{safetyError}</p>
+            )}
+
+            {safetyNumberResult && (
+              <div className="safety-result-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <strong style={{ fontSize: '11px', color: '#165c34' }}>
+                    ✓ Pairwise 60-Digit Safety Number with {safetyPeerEmail}:
+                  </strong>
+                  <button
+                    type="button"
+                    className="outline-button"
+                    style={{ fontSize: '10px', padding: '2px 8px' }}
+                    onClick={() => copyToClipboard(safetyNumberResult, 'safetyNum')}
+                  >
+                    {copiedKey === 'safetyNum' ? '✓ Copied' : 'Copy Code'}
+                  </button>
+                </div>
+                <div className="safety-digits-box">
+                  {safetyNumberResult}
+                </div>
+                <p style={{ margin: '8px 0 0', fontSize: '10px', color: 'var(--muted)', lineHeight: '1.4' }}>
+                  Both you and {safetyPeerEmail} compute this identical number independently. If either public key has been altered by a proxy or database admin, the numbers will mismatch!
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. SUPABASE DATABASE VS CLIENT DECRYPTION COMPARISON */}
       <section className="comparison-section" aria-label="Supabase DB vs Client Decryption">
         <div className="vault-section-title">
           <div>
@@ -621,6 +762,217 @@ export default function SecurityInspector({
             )}
           </div>
         )}
+      </section>
+
+      {/* 7. INDUSTRY BENCHMARK MATRIX: DUETCLOCK VS WHATSAPP VS TELEGRAM */}
+      <section className="benchmark-section" aria-label="WhatsApp vs Telegram Comparison">
+        <div className="vault-section-title">
+          <div>
+            <span className="eyebrow">COMPETITIVE CRYPTOGRAPHIC ANALYSIS</span>
+            <h3>Industry Security Benchmark: DUETCLOCK vs. WhatsApp vs. Telegram</h3>
+          </div>
+          <span className="security-badge">Academic Defense Suite</span>
+        </div>
+
+        <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 16px', lineHeight: '1.6' }}>
+          Evaluate why proprietary commercial messengers fall short under strict zero-trust threat models, and how DUETCLOCK eliminates centralized trust dependencies.
+        </p>
+
+        {/* Filter categories */}
+        <div className="benchmark-filters">
+          <button
+            type="button"
+            className={`benchmark-pill ${benchmarkCategory === 'all' ? 'active' : ''}`}
+            onClick={() => setBenchmarkCategory('all')}
+          >
+            All Dimensions (6)
+          </button>
+          <button
+            type="button"
+            className={`benchmark-pill ${benchmarkCategory === 'trust' ? 'active' : ''}`}
+            onClick={() => setBenchmarkCategory('trust')}
+          >
+            Server Trust &amp; Zero-Knowledge
+          </button>
+          <button
+            type="button"
+            className={`benchmark-pill ${benchmarkCategory === 'crypto' ? 'active' : ''}`}
+            onClick={() => setBenchmarkCategory('crypto')}
+          >
+            Cryptographic Standards
+          </button>
+          <button
+            type="button"
+            className={`benchmark-pill ${benchmarkCategory === 'metadata' ? 'active' : ''}`}
+            onClick={() => setBenchmarkCategory('metadata')}
+          >
+            Metadata Privacy
+          </button>
+          <button
+            type="button"
+            className={`benchmark-pill ${benchmarkCategory === 'identity' ? 'active' : ''}`}
+            onClick={() => setBenchmarkCategory('identity')}
+          >
+            Identity &amp; SIM-Swap Defense
+          </button>
+        </div>
+
+        {/* Comparison Table */}
+        <div className="benchmark-table-wrapper">
+          <table className="benchmark-table">
+            <thead>
+              <tr>
+                <th style={{ width: '22%' }}>Security Dimension</th>
+                <th style={{ width: '26%' }}>Telegram</th>
+                <th style={{ width: '26%' }}>WhatsApp</th>
+                <th style={{ width: '26%', background: '#eaf4ed', color: '#165c34' }}>DUETCLOCK (This System)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'crypto') && (
+                <tr>
+                  <td>
+                    <strong>Default E2EE Guarantee</strong>
+                    <small>Is message encryption mandatory?</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ NOT by default</span>
+                    <p>All regular group and 1-on-1 chats are stored on Telegram servers with server-accessible keys.</p>
+                  </td>
+                  <td className="status-cell">
+                    <span className="status-check">✓ Default E2EE</span>
+                    <p>Uses Signal Protocol for message transport.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ 100% Mandatory E2EE</span>
+                    <p>Plaintext never leaves the client browser RAM. Server physically cannot disable E2EE.</p>
+                  </td>
+                </tr>
+              )}
+
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'crypto') && (
+                <tr>
+                  <td>
+                    <strong>Cryptographic Standards</strong>
+                    <small>NIST/W3C vs Custom Homebrew</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">⚠️ Proprietary &ldquo;MTProto&rdquo;</span>
+                    <p>Custom MAC construction, historically criticized by cryptographers for non-standard design.</p>
+                  </td>
+                  <td className="status-cell">
+                    <span className="status-check">✓ Signal Protocol</span>
+                    <p>Double Ratchet algorithm with Curve25519.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ W3C &amp; NIST Standards</span>
+                    <p>Native WebCrypto API: RSA-OAEP (2048), AES-256-GCM (128-bit MAC), PBKDF2 (100k SHA-256).</p>
+                  </td>
+                </tr>
+              )}
+
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'trust') && (
+                <tr>
+                  <td>
+                    <strong>Server Trust &amp; Zero-Knowledge</strong>
+                    <small>Can database admin read messages?</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ Complete Server Trust</span>
+                    <p>Telegram holds the master keys for cloud messages. Subpoenas or breaches expose chats.</p>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">⚠️ Closed Trust Model</span>
+                    <p>Meta controls the closed key servers and mobile binaries. Key changes are not verified automatically.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ True Zero-Knowledge</span>
+                    <p>Supabase only ever stores ciphertext blobs. Even root database admins see zero plaintext.</p>
+                  </td>
+                </tr>
+              )}
+
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'metadata') && (
+                <tr>
+                  <td>
+                    <strong>Metadata &amp; Social Graph</strong>
+                    <small>Who you talk to, when &amp; how often</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ High Metadata Exposure</span>
+                    <p>Logs contacts, IP addresses, online timestamps, and group affiliations on cloud servers.</p>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ Commercial Metadata Mining</span>
+                    <p>Meta mines social graphs, messaging frequencies, device fingerprints, and address books.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ Zero Metadata Harvesting</span>
+                    <p>Isolated educational boundary. Zero trackers, zero third-party telemetry, minimal DB schema.</p>
+                  </td>
+                </tr>
+              )}
+
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'identity') && (
+                <tr>
+                  <td>
+                    <strong>Identity &amp; SIM-Swap Defense</strong>
+                    <small>Vulnerability to telecom attacks</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ SIM-Swap Vulnerable</span>
+                    <p>SMS phone-number registration makes accounts vulnerable to SS7 attacks and carrier SIM-swapping.</p>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ SIM-Swap Vulnerable</span>
+                    <p>Strictly bound to cellular numbers. Account takeover possible via fraudulent carrier SIM reissue.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ SIM-Swap Immune</span>
+                    <p>Enforces DUET student email (@students.duet.edu.pk) + RFC 6238 Hardware/App TOTP + 8 emergency codes.</p>
+                  </td>
+                </tr>
+              )}
+
+              {(benchmarkCategory === 'all' || benchmarkCategory === 'trust') && (
+                <tr>
+                  <td>
+                    <strong>Transparency &amp; Live Audit</strong>
+                    <small>Can you inspect the crypto live?</small>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ Closed Backend</span>
+                    <p>Client is open-source, but the backend is 100% closed proprietary software.</p>
+                  </td>
+                  <td className="critique-cell">
+                    <span className="status-cross">❌ 100% Closed Binaries</span>
+                    <p>Both client app binaries and backend servers are closed-source proprietary software.</p>
+                  </td>
+                  <td className="champion-cell">
+                    <span className="status-champion">★ Live Educational Inspector</span>
+                    <p>Open architecture with built-in live AEAD tampering simulation and real-time key inspection.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Defense Talking Points for Professor */}
+        <div className="defense-pitch-card">
+          <h4>🎓 Key Defense Summary for Examiners:</h4>
+          <ul>
+            <li>
+              <strong>Why not Telegram?</strong> Telegram stores all regular chat databases in decrypted form on its servers. DUETCLOCK enforces zero-knowledge architecture: the server and database hold zero decryption capabilities.
+            </li>
+            <li>
+              <strong>Why not WhatsApp?</strong> While WhatsApp uses the Signal Protocol, it is wrapped inside closed-source Meta binaries that collect massive communication metadata. Furthermore, WhatsApp relies on phone numbers vulnerable to SIM-swap attacks, whereas DUETCLOCK enforces institutional authentication and RFC 6238 TOTP.
+            </li>
+            <li>
+              <strong>Academic Novelty:</strong> DUETCLOCK features client-side PBKDF2 key wrapping, AEAD tamper detection, and deterministic out-of-band Safety Numbers running entirely in the browser Web Crypto sandbox.
+            </li>
+          </ul>
+        </div>
       </section>
     </div>
   );

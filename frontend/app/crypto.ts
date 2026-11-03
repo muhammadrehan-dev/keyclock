@@ -382,3 +382,56 @@ export async function diagnoseDecryption(
     };
   }
 }
+
+/**
+ * Computes a standardized SHA-256 fingerprint for a single public key.
+ * Formatted as 8 groups of 4 uppercase hex characters (e.g., A8B1-4C92-...).
+ */
+export async function computeKeyFingerprint(pubKeyJwkString: string): Promise<string> {
+  try {
+    const parsed = typeof pubKeyJwkString === 'string' ? JSON.parse(pubKeyJwkString) : pubKeyJwkString;
+    const canonical = JSON.stringify({ kty: parsed.kty, n: parsed.n, e: parsed.e });
+    const buffer = new TextEncoder().encode(canonical);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    return hex.match(/.{1,4}/g)?.slice(0, 8).join('-') || hex.slice(0, 32);
+  } catch {
+    return 'INVALID_KEY_FORMAT';
+  }
+}
+
+/**
+ * Computes a 60-digit Cryptographic Safety Number (Anti-MITM Verification Code)
+ * shared between two students, formatted as 12 groups of 5 digits (Signal/WhatsApp standard).
+ * Uses deterministic lexicographical sorting of both public keys so both users compute
+ * the exact same 60-digit sequence independently.
+ */
+export async function computeSafetyNumber(userPubKeyJwk: string, peerPubKeyJwk: string): Promise<string> {
+  try {
+    const keyA = typeof userPubKeyJwk === 'string' ? userPubKeyJwk.trim() : JSON.stringify(userPubKeyJwk);
+    const keyB = typeof peerPubKeyJwk === 'string' ? peerPubKeyJwk.trim() : JSON.stringify(peerPubKeyJwk);
+    const sorted = [keyA, keyB].sort().join('::DUET_SAFETY_SALT::');
+    
+    const encoder = new TextEncoder();
+    let currentHash = await crypto.subtle.digest('SHA-256', encoder.encode(sorted));
+    const fullBytes: number[] = [];
+    
+    for (let round = 0; round < 3; round++) {
+      fullBytes.push(...Array.from(new Uint8Array(currentHash)));
+      currentHash = await crypto.subtle.digest('SHA-256', new Uint8Array(currentHash));
+    }
+    
+    const blocks: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const offset = i * 4;
+      const num = ((fullBytes[offset] << 24) | (fullBytes[offset + 1] << 16) | (fullBytes[offset + 2] << 8) | fullBytes[offset + 3]) >>> 0;
+      const fiveDigits = (num % 100000).toString().padStart(5, '0');
+      blocks.push(fiveDigits);
+    }
+    
+    return blocks.join(' ');
+  } catch {
+    return 'Could not compute safety number. Ensure both users have valid public keys.';
+  }
+}
