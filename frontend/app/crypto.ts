@@ -242,3 +242,143 @@ export function clearPrivateKeyFromSession(): void {
   if (typeof window === 'undefined') return;
   sessionStorage.removeItem(SESSION_KEY);
 }
+
+export async function exportPrivateKeyToJwk(privateKey: CryptoKey): Promise<JsonWebKey> {
+  return await crypto.subtle.exportKey('jwk', privateKey);
+}
+
+export function parseEnvelope(ciphertextPayload: string): { v: number; iv: string; key: string; ct: string; rawJson: string } | null {
+  if (!ciphertextPayload || !ciphertextPayload.startsWith('E2EE:')) return null;
+  try {
+    const rawJson = new TextDecoder().decode(base64ToBytes(ciphertextPayload.slice(5)));
+    const envelope = JSON.parse(rawJson);
+    return {
+      v: envelope.v ?? 1,
+      iv: envelope.iv || '',
+      key: envelope.key || '',
+      ct: envelope.ct || '',
+      rawJson,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function tamperEnvelope(ciphertextPayload: string): string {
+  if (!ciphertextPayload || !ciphertextPayload.startsWith('E2EE:')) return ciphertextPayload;
+  try {
+    const rawJson = new TextDecoder().decode(base64ToBytes(ciphertextPayload.slice(5)));
+    const envelope = JSON.parse(rawJson);
+    if (envelope.ct && envelope.ct.length > 4) {
+      // Flip the last two characters of the ciphertext/tag
+      const originalCt = envelope.ct;
+      const flipped = originalCt.slice(0, -2) + (originalCt.slice(-2) === 'AA' ? 'BB' : 'AA');
+      envelope.ct = flipped;
+    } else {
+      envelope.ct = 'TAMPERED_TAG_BYTES';
+    }
+    return 'E2EE:' + bytesToBase64(new TextEncoder().encode(JSON.stringify(envelope)));
+  } catch {
+    return ciphertextPayload + '_TAMPERED';
+  }
+}
+
+export async function diagnoseDecryption(
+  ciphertextPayload: string,
+  userPrivateKey: CryptoKey | null
+): Promise<{
+  isE2EE: boolean;
+  envelope: { v: number; iv: string; key: string; ct: string } | null;
+  aesKeyUnwrapped: boolean;
+  decryptedPlaintext: string | null;
+  integrityError: boolean;
+  errorMessage: string | null;
+}> {
+  if (!ciphertextPayload || !ciphertextPayload.startsWith('E2EE:')) {
+    return {
+      isE2EE: false,
+      envelope: null,
+      aesKeyUnwrapped: false,
+      decryptedPlaintext: ciphertextPayload,
+      integrityError: false,
+      errorMessage: null,
+    };
+  }
+
+  const envelope = parseEnvelope(ciphertextPayload);
+  if (!envelope) {
+    return {
+      isE2EE: true,
+      envelope: null,
+      aesKeyUnwrapped: false,
+      decryptedPlaintext: null,
+      integrityError: true,
+      errorMessage: 'Envelope JSON structure corrupted or invalid base64.',
+    };
+  }
+
+  if (!userPrivateKey) {
+    return {
+      isE2EE: true,
+      envelope,
+      aesKeyUnwrapped: false,
+      decryptedPlaintext: null,
+      integrityError: false,
+      errorMessage: 'Private key is locked. Enter master password to decrypt.',
+    };
+  }
+
+  let aesKey: CryptoKey;
+  try {
+    const encKeyBytes = base64ToBytes(envelope.key);
+    const rawAesKey = await crypto.subtle.decrypt(
+      { name: 'RSA-OAEP' },
+      userPrivateKey,
+      encKeyBytes as unknown as BufferSource
+    );
+    aesKey = await crypto.subtle.importKey(
+      'raw',
+      rawAesKey,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+  } catch (err) {
+    return {
+      isE2EE: true,
+      envelope,
+      aesKeyUnwrapped: false,
+      decryptedPlaintext: null,
+      integrityError: false,
+      errorMessage: `RSA-OAEP Key Unwrapping Failed: This message was not encrypted for your public key (${err instanceof Error ? err.message : String(err)}).`,
+    };
+  }
+
+  try {
+    const iv = base64ToBytes(envelope.iv);
+    const ct = base64ToBytes(envelope.ct);
+    const decryptedBytes = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as unknown as BufferSource },
+      aesKey,
+      ct as unknown as BufferSource
+    );
+    const plaintext = new TextDecoder().decode(decryptedBytes);
+    return {
+      isE2EE: true,
+      envelope,
+      aesKeyUnwrapped: true,
+      decryptedPlaintext: plaintext,
+      integrityError: false,
+      errorMessage: null,
+    };
+  } catch (err) {
+    return {
+      isE2EE: true,
+      envelope,
+      aesKeyUnwrapped: true,
+      decryptedPlaintext: null,
+      integrityError: true,
+      errorMessage: `AEAD Integrity Tag Mismatch! Ciphertext or IV was modified (${err instanceof Error ? err.message : String(err)}).`,
+    };
+  }
+}

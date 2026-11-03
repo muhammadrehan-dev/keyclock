@@ -257,6 +257,9 @@ def signup(data: Registration, db: Session = Depends(db_session)):
 @app.post('/auth/reset-password', dependencies=private)
 def reset_password(data: Credentials, db: Session = Depends(db_session)):
     email = str(data.email).lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+    if required_domain and not email.endswith(required_domain):
+        raise HTTPException(400, f'Only {required_domain} student email addresses are allowed.')
     limit('login:' + email)
     user = db.scalar(select(User).where(User.email == email))
     if not user:
@@ -269,6 +272,9 @@ def reset_password(data: Credentials, db: Session = Depends(db_session)):
 @app.post('/auth/login', dependencies=private)
 def login(data: Credentials, db: Session = Depends(db_session)):
     email = str(data.email).lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+    if required_domain and not email.endswith(required_domain):
+        raise HTTPException(400, f'Only {required_domain} student email addresses are allowed.')
     limit('login-global', 300, 300)
     limit('login:' + email)
     user = db.scalar(select(User).where(User.email == email))
@@ -349,7 +355,11 @@ def logout(authorization: str = Header(default=''), db: Session = Depends(db_ses
 def get_keys(email: str = Query(default=''), authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'session')
     if email:
-        target = db.scalar(select(User).where(User.email == email.strip().lower(), User.enabled == True))
+        target_email = email.strip().lower()
+        required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+        if required_domain and not target_email.endswith(required_domain):
+            raise HTTPException(400, f'Only {required_domain} keys can be queried.')
+        target = db.scalar(select(User).where(User.email == target_email, User.enabled == True))
         if not target:
             raise HTTPException(404, 'No active account found for that email.')
         return {'email': target.email, 'public_key': target.public_key}
@@ -396,7 +406,11 @@ def registered_users(after: int = Query(default=0, ge=0), authorization: str = H
 def send_message(data: NewMessage, authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'session')
     limit('messages:' + str(found.user_id), 20, 300)
-    recipient = db.scalar(select(User).where(User.email == str(data.recipient).lower(), User.enabled == True))
+    recipient_email = str(data.recipient).lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+    if required_domain and not recipient_email.endswith(required_domain):
+        raise HTTPException(400, f'Messages can only be sent to verified {required_domain} addresses.')
+    recipient = db.scalar(select(User).where(User.email == recipient_email, User.enabled == True))
     if not recipient:
         raise HTTPException(404, 'No active account found for that email. Check the address and try again.')
     if recipient.id == found.user_id:
