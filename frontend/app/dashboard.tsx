@@ -4,6 +4,14 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import Members from './members';
 import SecurityInspector from './security-inspector';
 import {
+  ShieldIcon,
+  LockIcon,
+  UnlockIcon,
+  MailIcon,
+  SendIcon,
+  CheckIcon,
+} from './icons';
+import {
   decryptE2EEMessage,
   decryptPrivateKeyWithPassword,
   encryptE2EEMessage,
@@ -174,7 +182,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
 
       // 4. Send dual envelope to server
       await mailboxRequest({ recipient: recipientEmail, body: recipientCiphertext, sender_body: senderCiphertext });
-      setBody(''); setRecipient(''); setNotice('🔒 End-to-end encrypted message sent.');
+      setBody(''); setRecipient(''); setNotice('End-to-end encrypted message sent.');
       await refresh();
     } catch (e) {
       setSendError(e instanceof Error ? e.message : 'Could not send your message.');
@@ -200,8 +208,8 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
         <p>A little space to connect. Send an encrypted note, keep in touch.</p>
       </div>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <span className="security-badge">✓ Authenticator protected</span>
-        <span className="security-badge" title="End-to-End Encrypted via RSA-OAEP + AES-256-GCM">🔒 End-to-end encrypted</span>
+        <span className="security-badge"><CheckIcon size={12} style={{ marginRight: 4, color: '#2b7a42' }} /> Authenticator protected</span>
+        <span className="security-badge" title="End-to-End Encrypted via RSA-OAEP + AES-256-GCM"><LockIcon size={12} style={{ marginRight: 4, color: '#165c34' }} /> End-to-end encrypted</span>
       </div>
     </section>
 
@@ -213,14 +221,14 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
         className={`view-nav-tab ${view === 'messages' ? 'active' : ''}`}
         onClick={() => setView('messages')}
       >
-        ✉ Messages &amp; Direct Chat
+        <MailIcon size={14} style={{ marginRight: 6 }} /> Messages &amp; Direct Chat
       </button>
       <button
         type="button"
         className={`view-nav-tab ${view === 'security' ? 'active-security' : ''}`}
         onClick={() => setView('security')}
       >
-        🛡️ CIA Security &amp; Cryptography Inspector
+        <ShieldIcon size={14} style={{ marginRight: 6 }} /> CIA Security &amp; Cryptography Inspector
       </button>
     </nav>
 
@@ -240,7 +248,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
         {!userPrivateKey && (
           <section className="e2ee-unlock-banner" aria-label="Unlock encryption">
             <div>
-              <strong>🔒 End-to-End Encryption Key Locked</strong>
+              <strong><LockIcon size={14} style={{ marginRight: 6 }} /> End-to-End Encryption Key Locked</strong>
               <p>Enter your account password to unlock and decrypt your messages on this device.</p>
               <form className="e2ee-unlock-form" onSubmit={unlockKey}>
                 <input
@@ -283,7 +291,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
                 <p className="empty-mailbox" role="status">Loading your messages…</p>
               ) : mailbox && mailbox[folder].length === 0 ? (
                 <div className="empty-mailbox">
-                  <span aria-hidden="true">✉</span>
+                  <span aria-hidden="true" style={{ display: 'inline-block', marginBottom: 8 }}><MailIcon size={32} style={{ color: 'var(--muted)' }} /></span>
                   <h3>{folder === 'inbox' ? 'A fresh start.' : 'Your first hello starts here.'}</h3>
                   <p>{folder === 'inbox' ? 'Messages from other members will appear here. Share your account email so they can reach you.' : 'Send a message to another member using the form beside your inbox.'}</p>
                 </div>
@@ -295,7 +303,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
                         <div>
                           <strong>
                             {folder === 'sent' ? 'To: ' : ''}{message.contact.name || message.contact.email}
-                            {message.isEncrypted && <span className="e2ee-tag" title="End-to-End Encrypted"><span aria-hidden="true">🔒</span> E2EE</span>}
+                            {message.isEncrypted && <span className="e2ee-tag" title="End-to-End Encrypted"><LockIcon size={10} style={{ marginRight: 3 }} /> E2EE</span>}
                           </strong>
                           <small>{message.contact.email}</small>
                         </div>
@@ -329,7 +337,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
           <section className="dashboard-panel compose-panel" aria-labelledby="compose-title">
             <div className="eyebrow">SAY HELLO</div>
             <h2 id="compose-title">Send a message.</h2>
-            <div className="composer-e2ee-note"><span aria-hidden="true">🔒</span> End-to-end encrypted (only recipient and you can read)</div>
+            <div className="composer-e2ee-note"><LockIcon size={12} style={{ marginRight: 5 }} /> End-to-end encrypted (only recipient and you can read)</div>
             <p className="description">Reach another DUET student using their registered @students.duet.edu.pk email address.</p>
             <form onSubmit={send}>
               <fieldset disabled={sending || busy}>
@@ -356,7 +364,7 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
                 />
                 <div className="character-count">{body.length.toLocaleString()} / 2,000</div>
                 {sendError && <p className="error" role="alert">{sendError}</p>}
-                {notice && <p className="send-success" role="status">✓ {notice}</p>}
+                {notice && <p className="send-success" role="status"><CheckIcon size={13} style={{ marginRight: 4 }} /> {notice}</p>}
                 <button type="submit" className="primary" disabled={!body.trim() || !recipient.trim()}>
                   {sending ? 'Encrypting & Sending…' : 'Send encrypted message'}
                   <span aria-hidden="true">↗</span>

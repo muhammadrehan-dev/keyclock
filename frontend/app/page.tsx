@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import Dashboard from './dashboard';
+import { CheckIcon, ShieldIcon } from './icons';
 import {
   clearPrivateKeyFromSession,
   decryptPrivateKeyWithPassword,
@@ -261,8 +262,8 @@ export default function Home() {
         <div className="eyebrow">DUET STUDENT MESSAGING</div>
         <h1>A second layer.<br /><em>A safer space.</em></h1>
         <p className="intro">End-to-end encrypted messaging exclusively for Dawood University of Engineering & Technology students.</p>
-        <div className="illustration" aria-hidden="true"><div className="orbit one" /><div className="orbit two" /><div className="clock"><span className="clock-pin" /><span className="clock-hand" /><span className="clock-hand short" /></div><span className="mini-badge">✓</span><div className="floating-label">@students.duet.edu.pk ONLY</div></div>
-        <div className="aside-footer"><span className="small-star">✳</span><p>Verified with Firebase Email Link.<br /><strong>Protected by Authenticator TOTP & Web Crypto E2EE.</strong></p></div>
+        <div className="illustration" aria-hidden="true"><div className="orbit one" /><div className="orbit two" /><div className="clock"><span className="clock-pin" /><span className="clock-hand" /><span className="clock-hand short" /></div><span className="mini-badge"><CheckIcon size={12} /></span><div className="floating-label">@students.duet.edu.pk ONLY</div></div>
+        <div className="aside-footer"><span className="small-star"><ShieldIcon size={14} style={{ color: 'var(--green)' }} /></span><p>Verified with Firebase Email Link.<br /><strong>Protected by Authenticator TOTP & Web Crypto E2EE.</strong></p></div>
       </aside>
       <section className="card" aria-labelledby="form-title" aria-busy={busy || loading}>
         <div className="card-top">
@@ -279,7 +280,7 @@ export default function Home() {
           <h2 id="form-title">{titles[step]}</h2>
           <p className="description">{descriptions[step]}</p>
           {error && <div className="error" role="alert">{error}</div>}
-          {notice && <div className="send-success" style={{ margin: '15px 0' }} role="status">✓ {notice}</div>}
+          {notice && <div className="send-success" style={{ margin: '15px 0' }} role="status"><CheckIcon size={14} style={{ marginRight: 4 }} /> {notice}</div>}
 
           {step === 'verify-notice' && (
             <div>

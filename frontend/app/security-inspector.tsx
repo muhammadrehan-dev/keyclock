@@ -9,6 +9,21 @@ import {
   computeKeyFingerprint,
   computeSafetyNumber,
 } from './crypto';
+import {
+  ShieldIcon,
+  LockIcon,
+  UnlockIcon,
+  KeyIcon,
+  DatabaseIcon,
+  CheckIcon,
+  CrossIcon,
+  AlertTriangleIcon,
+  FingerprintIcon,
+  CopyIcon,
+  RefreshIcon,
+  StarIcon,
+  AcademicCapIcon,
+} from './icons';
 
 type Message = {
   id: number;
@@ -262,11 +277,11 @@ export default function SecurityInspector({
             Zero-Knowledge: The server and database administrator have zero ability to read messages or decrypt private keys.
           </p>
           <ul className="cia-specs-list">
-            <li><span className="check">✓</span> <strong>RSA-OAEP 2048-bit</strong> Asymmetric Key Wrapping</li>
-            <li><span className="check">✓</span> <strong>AES-256-GCM</strong> Ephemeral Symmetric Envelope</li>
-            <li><span className="check">✓</span> <strong>PBKDF2</strong> (100,000 SHA-256 rounds + 16B Salt) for Private Key</li>
-            <li><span className="check">✓</span> <strong>Fernet (AES-128-CBC + HMAC)</strong> for TOTP Secret at Rest</li>
-            <li><span className="check">✓</span> <strong>Argon2id</strong> Adaptive Password Hashing</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>RSA-OAEP 2048-bit</strong> Asymmetric Key Wrapping</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>AES-256-GCM</strong> Ephemeral Symmetric Envelope</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>PBKDF2</strong> (100,000 SHA-256 rounds + 16B Salt) for Private Key</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Fernet (AES-128-CBC + HMAC)</strong> for TOTP Secret at Rest</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Argon2id</strong> Adaptive Password Hashing</li>
           </ul>
         </article>
 
@@ -280,11 +295,11 @@ export default function SecurityInspector({
             Tamper-Proofing: Any modification of ciphertext in transit or inside the database triggers instant cryptographic failure.
           </p>
           <ul className="cia-specs-list">
-            <li><span className="check">✓</span> <strong>AES-256-GCM AEAD Tag</strong> (128-bit MAC validation)</li>
-            <li><span className="check">✓</span> <strong>TOTP Anti-Replay Counter</strong> (Monotonic DB counter)</li>
-            <li><span className="check">✓</span> <strong>@students.duet.edu.pk</strong> Domain Verification</li>
-            <li><span className="check">✓</span> <strong>Single-Use Tickets</strong> (Atomic deletion on use)</li>
-            <li><span className="check">✓</span> <strong>Constant-Time Digests</strong> (secrets.compare_digest)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>AES-256-GCM AEAD Tag</strong> (128-bit MAC validation)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>TOTP Anti-Replay Counter</strong> (Monotonic DB counter)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>@students.duet.edu.pk</strong> Domain Verification</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Single-Use Tickets</strong> (Atomic deletion on use)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Constant-Time Digests</strong> (secrets.compare_digest)</li>
           </ul>
         </article>
 
@@ -298,11 +313,11 @@ export default function SecurityInspector({
             Service Continuity: Shields central servers from resource starvation and guarantees user disaster recovery.
           </p>
           <ul className="cia-specs-list">
-            <li><span className="check">✓</span> <strong>Atomic Sliding Throttles</strong> (Login, OTP, Signup, API)</li>
-            <li><span className="check">✓</span> <strong>8 One-Time Recovery Codes</strong> (Phone loss tolerance)</li>
-            <li><span className="check">✓</span> <strong>Client-Side Crypto Offload</strong> (Server CPU preserved)</li>
-            <li><span className="check">✓</span> <strong>Automated Database Garbage Collection</strong> of expired state</li>
-            <li><span className="check">✓</span> <strong>5-Attempt OTP Lockout</strong> (Prevents 6-digit exhaustion)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Atomic Sliding Throttles</strong> (Login, OTP, Signup, API)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>8 One-Time Recovery Codes</strong> (Phone loss tolerance)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Client-Side Crypto Offload</strong> (Server CPU preserved)</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>Automated Database Garbage Collection</strong> of expired state</li>
+            <li><span className="check"><CheckIcon size={12} /></span> <strong>5-Attempt OTP Lockout</strong> (Prevents 6-digit exhaustion)</li>
           </ul>
         </article>
       </section>
@@ -337,7 +352,7 @@ export default function SecurityInspector({
                 className="outline-button"
                 onClick={() => copyToClipboard(formattedPublicJwk, 'pub')}
               >
-                {copiedKey === 'pub' ? '✓ Copied' : 'Copy Public JWK'}
+                {copiedKey === 'pub' ? <><CheckIcon size={12} style={{ marginRight: 4 }} /> Copied</> : <><CopyIcon size={12} style={{ marginRight: 4 }} /> Copy Public JWK</>}
               </button>
             </div>
           </div>
@@ -361,7 +376,7 @@ export default function SecurityInspector({
                 className="outline-button"
                 onClick={() => copyToClipboard(formattedEncryptedPrivKey, 'encPriv')}
               >
-                {copiedKey === 'encPriv' ? '✓ Copied' : 'Copy Stored Bundle'}
+                {copiedKey === 'encPriv' ? <><CheckIcon size={12} style={{ marginRight: 4 }} /> Copied</> : <><CopyIcon size={12} style={{ marginRight: 4 }} /> Copy Stored Bundle</>}
               </button>
             </div>
           </div>
@@ -374,9 +389,9 @@ export default function SecurityInspector({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <strong style={{ fontSize: '13px' }}>Client Browser Memory State:</strong>
                 {userPrivateKey ? (
-                  <span className="key-badge unlocked">● Private Key Unlocked (RAM / SessionStorage)</span>
+                  <span className="key-badge unlocked"><UnlockIcon size={12} style={{ marginRight: 4 }} /> Private Key Unlocked (RAM / SessionStorage)</span>
                 ) : (
-                  <span className="key-badge locked">● Private Key Locked</span>
+                  <span className="key-badge locked"><LockIcon size={12} style={{ marginRight: 4 }} /> Private Key Locked</span>
                 )}
               </div>
               <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--muted)' }}>
@@ -429,7 +444,7 @@ export default function SecurityInspector({
                   className="outline-button"
                   onClick={() => copyToClipboard(revealedPrivateKeyJwk, 'privJwk')}
                 >
-                  {copiedKey === 'privJwk' ? '✓ Copied' : 'Copy Private JWK'}
+                  {copiedKey === 'privJwk' ? <><CheckIcon size={12} style={{ marginRight: 4 }} /> Copied</> : <><CopyIcon size={12} style={{ marginRight: 4 }} /> Copy Private JWK</>}
                 </button>
               </div>
               <pre className="code-display" style={{ background: '#0a1610', color: '#68e29a' }}>
@@ -475,7 +490,7 @@ export default function SecurityInspector({
                 className="outline-button"
                 onClick={() => copyToClipboard(userFingerprint, 'fp')}
               >
-                {copiedKey === 'fp' ? '✓ Copied' : 'Copy Fingerprint'}
+                {copiedKey === 'fp' ? <><CheckIcon size={12} style={{ marginRight: 4 }} /> Copied</> : <><CopyIcon size={12} style={{ marginRight: 4 }} /> Copy Fingerprint</>}
               </button>
             </div>
           </div>
@@ -505,7 +520,7 @@ export default function SecurityInspector({
                 className="outline-button"
                 disabled={safetyComputing || !safetyPeerEmail.trim()}
               >
-                {safetyComputing ? 'Fetching Key…' : 'Compute 60-Digit Code'}
+                {safetyComputing ? 'Fetching Key…' : <><FingerprintIcon size={12} style={{ marginRight: 4 }} /> Compute 60-Digit Code</>}
               </button>
             </form>
 
@@ -516,8 +531,8 @@ export default function SecurityInspector({
             {safetyNumberResult && (
               <div className="safety-result-box">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <strong style={{ fontSize: '11px', color: '#165c34' }}>
-                    ✓ Pairwise 60-Digit Safety Number with {safetyPeerEmail}:
+                  <strong style={{ fontSize: '11px', color: '#165c34', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <CheckIcon size={13} style={{ color: '#165c34' }} /> Pairwise 60-Digit Safety Number with {safetyPeerEmail}:
                   </strong>
                   <button
                     type="button"
@@ -525,7 +540,7 @@ export default function SecurityInspector({
                     style={{ fontSize: '10px', padding: '2px 8px' }}
                     onClick={() => copyToClipboard(safetyNumberResult, 'safetyNum')}
                   >
-                    {copiedKey === 'safetyNum' ? '✓ Copied' : 'Copy Code'}
+                    {copiedKey === 'safetyNum' ? <><CheckIcon size={11} style={{ marginRight: 3 }} /> Copied</> : <><CopyIcon size={11} style={{ marginRight: 3 }} /> Copy Code</>}
                   </button>
                 </div>
                 <div className="safety-digits-box">
@@ -577,7 +592,7 @@ export default function SecurityInspector({
               {/* Left Column: What Supabase Stores */}
               <div className="comparison-pane database-pane">
                 <div className="comparison-pane-header">
-                  <h4><span>🗄️</span> What Supabase DB Stores (Raw Record)</h4>
+                  <h4><DatabaseIcon size={16} style={{ marginRight: 6, color: '#254e7d' }} /> What Supabase DB Stores (Raw Record)</h4>
                   <span className="key-badge encrypted">Ciphertext Only</span>
                 </div>
 
@@ -617,7 +632,7 @@ export default function SecurityInspector({
               {/* Right Column: What Client Decrypts */}
               <div className="comparison-pane client-pane">
                 <div className="comparison-pane-header">
-                  <h4><span>🔓</span> What Client Decrypts via Private Key</h4>
+                  <h4><UnlockIcon size={16} style={{ marginRight: 6, color: '#165c34' }} /> What Client Decrypts via Private Key</h4>
                   <span className="key-badge public">Decrypted in RAM</span>
                 </div>
 
@@ -626,7 +641,7 @@ export default function SecurityInspector({
                   <div style={{ fontSize: '12px', fontWeight: 600 }}>
                     {activeDecryptedMsg?.contact.name} ({activeDecryptedMsg?.contact.email})
                   </div>
-                  <span style={{ fontSize: '10px', color: 'var(--green)' }}>✓ Verified @students.duet.edu.pk identity</span>
+                  <span style={{ fontSize: '10px', color: 'var(--green)' }}><CheckIcon size={11} style={{ marginRight: 3, color: 'var(--green)' }} /> Verified @students.duet.edu.pk identity</span>
                 </div>
 
                 <div className="envelope-field" style={{ marginTop: '8px' }}>
@@ -699,7 +714,7 @@ export default function SecurityInspector({
             disabled={!labCiphertext}
             title="Corrupt ciphertext bytes to simulate a man-in-the-middle or database tampering attack"
           >
-            ⚠️ Simulate Attack: Tamper 1 Byte in Ciphertext
+            <AlertTriangleIcon size={14} style={{ marginRight: 6 }} /> Simulate Attack: Tamper 1 Byte in Ciphertext
           </button>
 
           <button
@@ -708,7 +723,7 @@ export default function SecurityInspector({
             onClick={handleTestDecrypt}
             disabled={!labCiphertext}
           >
-            🔓 Test Decrypt with Private Key
+            <UnlockIcon size={14} style={{ marginRight: 6 }} /> Test Decrypt with Private Key
           </button>
 
           <button
@@ -717,7 +732,7 @@ export default function SecurityInspector({
             onClick={handleResetPayload}
             disabled={!activeRawMsg}
           >
-            ↺ Reset to Original Message
+            <RefreshIcon size={13} style={{ marginRight: 6 }} /> Reset to Original Message
           </button>
 
           {isTampered && (
@@ -731,17 +746,21 @@ export default function SecurityInspector({
         {labResult.tested && (
           <div className={`lab-result-box ${labResult.success ? 'success' : 'tamper-caught'}`}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '13px' }}>
-              {labResult.success ? '✓ AEAD Verification Succeeded' : '❌ Cryptographic Integrity Violation Caught!'}
+              {labResult.success ? (
+                <><CheckIcon size={15} style={{ marginRight: 6, color: '#165c34' }} /> AEAD Verification Succeeded</>
+              ) : (
+                <><CrossIcon size={15} style={{ marginRight: 6, color: '#d94326' }} /> Cryptographic Integrity Violation Caught!</>
+              )}
             </div>
 
             <ul className="lab-result-steps">
               <li>
-                <span>{labResult.unwrappedKey ? '✓' : '⚠️'}</span>
+                <span>{labResult.unwrappedKey ? <CheckIcon size={13} style={{ color: '#2b7a42' }} /> : <AlertTriangleIcon size={13} style={{ color: '#d94326' }} />}</span>
                 <strong>RSA-OAEP Key Unwrapping:</strong>{' '}
                 {labResult.unwrappedKey ? 'Ephemeral AES-256 key successfully recovered using private key.' : 'Could not unwrap AES key.'}
               </li>
               <li>
-                <span>{labResult.success ? '✓' : '❌'}</span>
+                <span>{labResult.success ? <CheckIcon size={13} style={{ color: '#2b7a42' }} /> : <CrossIcon size={13} style={{ color: '#d94326' }} />}</span>
                 <strong>AES-256-GCM AEAD Tag Authentication:</strong>{' '}
                 {labResult.success
                   ? 'Authentication tag matches! Message has not been modified.'
@@ -836,15 +855,15 @@ export default function SecurityInspector({
                     <small>Is message encryption mandatory?</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ NOT by default</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> NOT by default</span>
                     <p>All regular group and 1-on-1 chats are stored on Telegram servers with server-accessible keys.</p>
                   </td>
                   <td className="status-cell">
-                    <span className="status-check">✓ Default E2EE</span>
+                    <span className="status-check"><CheckIcon size={12} style={{ marginRight: 4 }} /> Default E2EE</span>
                     <p>Uses Signal Protocol for message transport.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ 100% Mandatory E2EE</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> 100% Mandatory E2EE</span>
                     <p>Plaintext never leaves the client browser RAM. Server physically cannot disable E2EE.</p>
                   </td>
                 </tr>
@@ -857,15 +876,15 @@ export default function SecurityInspector({
                     <small>NIST/W3C vs Custom Homebrew</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">⚠️ Proprietary &ldquo;MTProto&rdquo;</span>
+                    <span className="status-cross"><AlertTriangleIcon size={12} style={{ marginRight: 4 }} /> Proprietary &ldquo;MTProto&rdquo;</span>
                     <p>Custom MAC construction, historically criticized by cryptographers for non-standard design.</p>
                   </td>
                   <td className="status-cell">
-                    <span className="status-check">✓ Signal Protocol</span>
+                    <span className="status-check"><CheckIcon size={12} style={{ marginRight: 4 }} /> Signal Protocol</span>
                     <p>Double Ratchet algorithm with Curve25519.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ W3C &amp; NIST Standards</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> W3C &amp; NIST Standards</span>
                     <p>Native WebCrypto API: RSA-OAEP (2048), AES-256-GCM (128-bit MAC), PBKDF2 (100k SHA-256).</p>
                   </td>
                 </tr>
@@ -878,15 +897,15 @@ export default function SecurityInspector({
                     <small>Can database admin read messages?</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ Complete Server Trust</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> Complete Server Trust</span>
                     <p>Telegram holds the master keys for cloud messages. Subpoenas or breaches expose chats.</p>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">⚠️ Closed Trust Model</span>
+                    <span className="status-cross"><AlertTriangleIcon size={12} style={{ marginRight: 4 }} /> Closed Trust Model</span>
                     <p>Meta controls the closed key servers and mobile binaries. Key changes are not verified automatically.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ True Zero-Knowledge</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> True Zero-Knowledge</span>
                     <p>Supabase only ever stores ciphertext blobs. Even root database admins see zero plaintext.</p>
                   </td>
                 </tr>
@@ -899,15 +918,15 @@ export default function SecurityInspector({
                     <small>Who you talk to, when &amp; how often</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ High Metadata Exposure</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> High Metadata Exposure</span>
                     <p>Logs contacts, IP addresses, online timestamps, and group affiliations on cloud servers.</p>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ Commercial Metadata Mining</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> Commercial Metadata Mining</span>
                     <p>Meta mines social graphs, messaging frequencies, device fingerprints, and address books.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ Zero Metadata Harvesting</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> Zero Metadata Harvesting</span>
                     <p>Isolated educational boundary. Zero trackers, zero third-party telemetry, minimal DB schema.</p>
                   </td>
                 </tr>
@@ -920,15 +939,15 @@ export default function SecurityInspector({
                     <small>Vulnerability to telecom attacks</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ SIM-Swap Vulnerable</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> SIM-Swap Vulnerable</span>
                     <p>SMS phone-number registration makes accounts vulnerable to SS7 attacks and carrier SIM-swapping.</p>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ SIM-Swap Vulnerable</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> SIM-Swap Vulnerable</span>
                     <p>Strictly bound to cellular numbers. Account takeover possible via fraudulent carrier SIM reissue.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ SIM-Swap Immune</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> SIM-Swap Immune</span>
                     <p>Enforces DUET student email (@students.duet.edu.pk) + RFC 6238 Hardware/App TOTP + 8 emergency codes.</p>
                   </td>
                 </tr>
@@ -941,15 +960,15 @@ export default function SecurityInspector({
                     <small>Can you inspect the crypto live?</small>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ Closed Backend</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> Closed Backend</span>
                     <p>Client is open-source, but the backend is 100% closed proprietary software.</p>
                   </td>
                   <td className="critique-cell">
-                    <span className="status-cross">❌ 100% Closed Binaries</span>
+                    <span className="status-cross"><CrossIcon size={12} style={{ marginRight: 4 }} /> 100% Closed Binaries</span>
                     <p>Both client app binaries and backend servers are closed-source proprietary software.</p>
                   </td>
                   <td className="champion-cell">
-                    <span className="status-champion">★ Live Educational Inspector</span>
+                    <span className="status-champion"><StarIcon size={12} style={{ marginRight: 4, color: '#e09819' }} /> Live Educational Inspector</span>
                     <p>Open architecture with built-in live AEAD tampering simulation and real-time key inspection.</p>
                   </td>
                 </tr>
@@ -960,7 +979,7 @@ export default function SecurityInspector({
 
         {/* Defense Talking Points for Professor */}
         <div className="defense-pitch-card">
-          <h4>🎓 Key Defense Summary for Examiners:</h4>
+          <h4><AcademicCapIcon size={16} style={{ marginRight: 6, color: '#14542d' }} /> Key Defense Summary for Examiners:</h4>
           <ul>
             <li>
               <strong>Why not Telegram?</strong> Telegram stores all regular chat databases in decrypted form on its servers. DUETCLOCK enforces zero-knowledge architecture: the server and database hold zero decryption capabilities.
