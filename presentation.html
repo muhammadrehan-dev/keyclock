@@ -1,1012 +1,2082 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>DUETCLOCK · Information Security Presentation Deck</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
   
+
   <style>
+
     :root {
+
       --ink: #16362e;
+
       --muted: #66766e;
+
       --green: #1d5743;
+
       --green-dark: #123d2e;
+
       --green-light: #eaf4ed;
+
       --accent: #eaf0b3;
+
       --line: #dde2d8;
+
       --paper: #f5f5ed;
+
       --card-bg: #fffefa;
+
       --code-bg: #0a1610;
+
       --code-fg: #68e29a;
+
       --danger: #be2e15;
+
       --danger-bg: #fff0e9;
+
     }
+
+
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     
+
     body {
+
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
       color: var(--ink);
+
       background: #2a332d;
+
       line-height: 1.5;
+
       -webkit-font-smoothing: antialiased;
+
       overflow-x: hidden;
+
     }
+
+
 
     /* Presentation Slide Container (16:9 Landscape) */
+
     .deck-container {
+
       display: flex;
+
       flex-direction: column;
+
       align-items: center;
+
       gap: 30px;
+
       padding: 30px 10px;
+
     }
+
+
 
     .slide {
+
       width: 1280px;
+
       height: 720px;
+
       background: var(--paper);
+
       border-radius: 12px;
+
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+
       position: relative;
+
       overflow: hidden;
+
       display: flex;
+
       flex-direction: column;
+
       justify-content: space-between;
+
       padding: 44px 56px;
+
       page-break-after: always;
+
       flex-shrink: 0;
+
     }
 
-    /* Print Setup for PDF Export */
-    @page {
-      size: A4 landscape;
-      margin: 0;
+
+
+    /* Universal Print Color Enforcement (Preserves All Backgrounds & Colors) */
+
+    *, *::before, *::after {
+
+      -webkit-print-color-adjust: exact !important;
+
+      print-color-adjust: exact !important;
+
+      color-adjust: exact !important;
+
     }
+
+
+
+    /* Print Setup for PDF Export (Exact 16:9 Presentation Match) */
+
+    @page {
+
+      size: 1280px 720px;
+
+      margin: 0;
+
+    }
+
+
 
     @media print {
-      body {
-        background: transparent;
-        padding: 0;
+
+      html, body {
+
+        width: 1280px !important;
+
+        height: 720px !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+
+        background: transparent !important;
+
+        -webkit-print-color-adjust: exact !important;
+
+        print-color-adjust: exact !important;
+
       }
+
       .deck-container {
-        padding: 0;
-        gap: 0;
+
+        padding: 0 !important;
+
+        margin: 0 !important;
+
+        gap: 0 !important;
+
+        display: block !important;
+
       }
+
       .slide {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-        box-shadow: none;
-        padding: 36px 48px;
-        page-break-inside: avoid;
-        page-break-after: always;
+
+        width: 1280px !important;
+
+        height: 720px !important;
+
+        min-width: 1280px !important;
+
+        max-width: 1280px !important;
+
+        min-height: 720px !important;
+
+        max-height: 720px !important;
+
+        border-radius: 0 !important;
+
+        box-shadow: none !important;
+
+        padding: 44px 56px !important;
+
+        margin: 0 !important;
+
+        page-break-before: auto !important;
+
+        page-break-after: always !important;
+
+        break-after: page !important;
+
+        page-break-inside: avoid !important;
+
+        break-inside: avoid !important;
+
+        overflow: hidden !important;
+
+        -webkit-print-color-adjust: exact !important;
+
+        print-color-adjust: exact !important;
+
       }
+
       .nav-controls, .speaker-notes-banner {
+
         display: none !important;
+
       }
+
     }
+
+
 
     /* Header & Footer on each slide */
+
     .slide-header {
+
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
+
       border-bottom: 1px solid var(--line);
+
       padding-bottom: 14px;
+
       margin-bottom: 20px;
+
     }
+
+
 
     .brand {
+
       font-family: 'Manrope', sans-serif;
+
       font-size: 20px;
+
       font-weight: 800;
+
       display: flex;
+
       align-items: center;
+
       gap: 8px;
+
       letter-spacing: -0.5px;
+
     }
+
+
 
     .brandmark {
+
       display: grid;
+
       place-items: center;
+
       background: var(--green);
+
       color: var(--accent);
+
       width: 26px;
+
       height: 28px;
+
       border-radius: 7px 7px 7px 2px;
+
       font-size: 20px;
+
       font-weight: 800;
+
     }
+
+
 
     .slide-badge {
+
       display: inline-flex;
+
       align-items: center;
+
       gap: 6px;
+
       background: #eef2e5;
+
       border: 1px solid #dce5ce;
+
       padding: 4px 10px;
+
       border-radius: 20px;
+
       font-size: 10px;
+
       font-weight: 700;
+
       letter-spacing: 0.5px;
+
       color: var(--green);
+
       text-transform: uppercase;
+
     }
+
+
 
     .slide-footer {
+
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
+
       border-top: 1px solid var(--line);
+
       padding-top: 12px;
+
       margin-top: 16px;
+
       font-size: 10px;
+
       color: var(--muted);
+
     }
+
+
 
     .slide-content {
+
       flex: 1;
+
       display: flex;
+
       flex-direction: column;
+
       justify-content: center;
+
     }
+
+
 
     /* Typography */
+
     h1 {
+
       font-family: 'Manrope', sans-serif;
+
       font-size: 44px;
+
       line-height: 1.15;
+
       font-weight: 800;
+
       letter-spacing: -1.5px;
+
       color: var(--ink);
+
       margin-bottom: 16px;
+
     }
+
+
 
     h1 em {
+
       font-style: normal;
+
       color: #55795b;
+
     }
+
+
 
     h2 {
+
       font-family: 'Manrope', sans-serif;
+
       font-size: 28px;
+
       line-height: 1.25;
+
       font-weight: 700;
+
       letter-spacing: -0.8px;
+
       color: var(--ink);
+
       margin-bottom: 12px;
+
     }
+
+
 
     p.lead {
+
       font-size: 15px;
+
       color: var(--muted);
+
       line-height: 1.6;
+
       max-width: 900px;
+
       margin-bottom: 22px;
+
     }
+
+
 
     .eyebrow {
+
       font-size: 11px;
+
       font-weight: 800;
+
       letter-spacing: 1.8px;
+
       color: var(--green);
+
       text-transform: uppercase;
+
       margin-bottom: 6px;
+
       display: block;
+
     }
+
+
 
     /* Two-column layout */
+
     .two-col {
+
       display: grid;
+
       grid-template-columns: 1fr 1fr;
+
       gap: 36px;
+
       align-items: center;
+
       height: 100%;
+
     }
+
+
 
     .col-left {
+
       display: flex;
+
       flex-direction: column;
+
       justify-content: center;
+
     }
+
+
 
     /* Screenshot Mockup Container */
+
     .screenshot-frame {
+
       background: var(--card-bg);
+
       border: 1px solid var(--line);
+
       border-radius: 12px;
+
       padding: 10px;
+
       box-shadow: 0 14px 34px rgba(22, 54, 46, 0.08);
+
       position: relative;
+
       display: flex;
+
       flex-direction: column;
+
       height: 440px;
+
       overflow: hidden;
+
     }
+
+
 
     .screenshot-frame-bar {
+
       display: flex;
+
       align-items: center;
+
       gap: 6px;
+
       padding: 0 4px 8px;
+
       border-bottom: 1px solid var(--line);
+
       margin-bottom: 8px;
+
     }
+
+
 
     .frame-dot {
+
       width: 8px;
+
       height: 8px;
+
       border-radius: 50%;
+
       background: #d4d9cd;
+
     }
+
+    .frame-dot:nth-child(1) { background: #ff5f56; }
+
+    .frame-dot:nth-child(2) { background: #ffbd2e; }
+
+    .frame-dot:nth-child(3) { background: #27c93f; }
+
+
 
     .frame-url {
+
       font-family: 'JetBrains Mono', monospace;
+
       font-size: 9px;
+
       color: var(--muted);
+
       background: #f1f4ec;
+
       padding: 2px 10px;
+
       border-radius: 12px;
+
       margin-left: auto;
+
     }
+
+
 
     .screenshot-img-box {
+
       flex: 1;
+
       border-radius: 8px;
+
       overflow: hidden;
-      background: #edf0e6;
+
+      background: #f5f5ed;
+
       display: flex;
+
       flex-direction: column;
+
       align-items: center;
+
       justify-content: center;
-      border: 1px dashed #b9c4ad;
+
+      border: 1px solid #dce2d7;
+
       position: relative;
+
     }
+
+
 
     .screenshot-img-box img {
+
       width: 100%;
+
       height: 100%;
+
       object-fit: contain;
+
       background: #fff;
+
     }
+
+
 
     .screenshot-placeholder-text {
+
       text-align: center;
+
       padding: 20px;
+
     }
+
+
 
     .screenshot-placeholder-text strong {
+
       display: block;
+
       font-size: 13px;
+
       color: var(--green);
+
       margin-bottom: 6px;
+
     }
+
+
 
     .screenshot-placeholder-text p {
+
       font-size: 11px;
+
       color: var(--muted);
+
       line-height: 1.4;
+
       max-width: 340px;
+
     }
+
+
 
     /* Cards & Lists */
+
     .spec-card {
+
       background: var(--card-bg);
+
       border: 1px solid var(--line);
+
       border-radius: 10px;
+
       padding: 16px 20px;
+
       margin-bottom: 12px;
+
     }
+
+
 
     .spec-card h3 {
+
       font-size: 14px;
+
       font-weight: 700;
+
       margin-bottom: 4px;
+
       color: var(--ink);
+
       display: flex;
+
       align-items: center;
+
       gap: 8px;
+
     }
+
+
 
     .spec-card p {
+
       font-size: 11.5px;
+
       color: var(--muted);
+
       line-height: 1.5;
+
     }
+
+
 
     .bullet-list {
+
       list-style: none;
+
       display: flex;
+
       flex-direction: column;
+
       gap: 10px;
+
       margin-top: 8px;
+
     }
+
+
 
     .bullet-list li {
+
       display: flex;
+
       align-items: flex-start;
+
       gap: 10px;
+
       font-size: 12.5px;
+
       line-height: 1.5;
+
     }
+
+
 
     .icon-bullet {
+
       width: 18px;
+
       height: 18px;
+
       border-radius: 50%;
+
       background: var(--green-light);
+
       color: var(--green);
+
       display: grid;
+
       place-items: center;
+
       font-size: 11px;
+
       font-weight: 800;
+
       flex-shrink: 0;
+
       margin-top: 2px;
+
     }
+
+
 
     /* CIA Triad 3-Column Layout */
+
     .triad-grid {
+
       display: grid;
+
       grid-template-columns: repeat(3, 1fr);
+
       gap: 20px;
+
       height: 100%;
+
       align-items: stretch;
+
     }
+
+
 
     .triad-card {
+
       background: var(--card-bg);
+
       border: 1px solid var(--line);
+
       border-radius: 12px;
+
       padding: 24px;
+
       display: flex;
+
       flex-direction: column;
+
       justify-content: space-between;
+
       position: relative;
+
     }
+
+
 
     .triad-card::before {
+
       content: '';
+
       position: absolute;
+
       top: 0;
+
       left: 0;
+
       right: 0;
+
       height: 4px;
+
       border-radius: 12px 12px 0 0;
+
     }
+
+
 
     .triad-card.conf::before { background: var(--green); }
+
     .triad-card.integ::before { background: #254e7d; }
+
     .triad-card.avail::before { background: #8a6417; }
 
+
+
     .triad-card h3 {
+
       font-family: 'Manrope', sans-serif;
+
       font-size: 18px;
+
       margin-bottom: 6px;
+
     }
+
+
 
     .triad-card p.sub {
+
       font-size: 11px;
+
       color: var(--muted);
+
       margin-bottom: 16px;
+
       min-height: 33px;
+
     }
+
+
 
     .triad-card ul {
+
       list-style: none;
+
       display: flex;
+
       flex-direction: column;
+
       gap: 10px;
+
       font-size: 11px;
+
     }
+
+
 
     .triad-card ul li {
+
       display: flex;
+
       align-items: flex-start;
+
       gap: 8px;
+
       line-height: 1.4;
+
     }
+
+
 
     /* Comparison Table */
+
     .comp-table {
+
       width: 100%;
+
       border-collapse: collapse;
+
       font-size: 11px;
+
       background: var(--card-bg);
+
       border-radius: 10px;
+
       overflow: hidden;
+
       border: 1px solid var(--line);
+
     }
+
+
 
     .comp-table th {
+
       background: #eff3ea;
+
       padding: 10px 14px;
+
       text-align: left;
+
       font-weight: 700;
+
       border-bottom: 1px solid var(--line);
+
     }
+
+
 
     .comp-table td {
+
       padding: 11px 14px;
+
       border-bottom: 1px solid #edf0ea;
+
       vertical-align: top;
+
       line-height: 1.4;
+
     }
+
+
 
     .comp-table tr:last-child td {
+
       border-bottom: none;
+
     }
+
+
 
     .comp-highlight {
+
       background: #f4faf5;
+
       font-weight: 600;
+
       color: #124d2b;
+
       border-left: 2px solid #58a06f;
+
     }
+
+
 
     .badge-cross { color: var(--danger); font-weight: 700; }
+
     .badge-check { color: #23743a; font-weight: 700; }
+
     .badge-star { color: #165c34; font-weight: 800; }
 
+
+
     /* Floating UI Navigation for Web Browser Mode */
+
     .nav-controls {
+
       position: fixed;
+
       bottom: 20px;
+
       right: 20px;
+
       background: rgba(22, 54, 46, 0.95);
+
       backdrop-filter: blur(8px);
+
       padding: 10px 18px;
+
       border-radius: 30px;
+
       display: flex;
+
       gap: 14px;
+
       align-items: center;
+
       color: #fff;
+
       font-size: 12px;
+
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
       z-index: 999;
+
     }
+
+
 
     .nav-btn {
+
       background: #2f5a4a;
+
       border: 0;
+
       color: #fff;
+
       padding: 6px 14px;
+
       border-radius: 20px;
+
       cursor: pointer;
+
       font-weight: 600;
+
       transition: background 0.15s;
+
     }
+
+
 
     .nav-btn:hover {
+
       background: #3f7460;
+
     }
 
+
+
   </style>
+
 </head>
+
 <body>
 
+
+
   <!-- Floating Navigation Controller -->
+
   <aside class="nav-controls" aria-label="Deck controls">
+
     <span>DUETCLOCK Slides (1–8)</span>
+
     <button class="nav-btn" onclick="scrollToSlide(-1)">↑ Prev</button>
+
     <button class="nav-btn" onclick="scrollToSlide(1)">↓ Next</button>
+
+    <button class="nav-btn" onclick="window.print()" title="Export Pixel-Perfect PDF" style="background: #1d5743;">🖨️ Export PDF</button>
+
   </aside>
+
+
 
   <div class="deck-container">
 
+
+
     <!-- ==================== SLIDE 1: TITLE & COVER ==================== -->
+
     <section class="slide" id="slide-1">
+
       <header class="slide-header">
+
         <div class="brand">
+
           <span class="brandmark">D</span>
+
           <span>DUETCLOCK</span>
+
         </div>
+
         <span class="slide-badge">InfoSec Capstone Presentation</span>
+
       </header>
+
+
 
       <div class="slide-content" style="justify-content: center; align-items: flex-start; padding-left: 20px;">
+
         <span class="eyebrow">DAWOOD UNIVERSITY OF ENGINEERING &amp; TECHNOLOGY · DEPT OF COMPUTER SYSTEMS / INFOSEC</span>
+
         <h1>Demystifying the <em>CIA Triad</em><br>In Zero-Knowledge Messaging</h1>
+
         <p class="lead" style="font-size: 17px; max-width: 820px;">
+
           An institutional-grade, zero-knowledge client-side encryption messaging system built with W3C WebCrypto API, TOTP 2FA, and Supabase server-blind PostgreSQL storage.
+
         </p>
 
+
+
         <div style="display: flex; gap: 28px; margin-top: 15px; border-top: 1px solid var(--line); padding-top: 24px; width: 100%;">
+
           <div>
+
             <span style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; display: block;">Presenter</span>
+
             <strong style="font-size: 14px; color: var(--ink);">Muhammad Rehan (25f-cy-102)</strong>
+
             <small style="display: block; color: var(--muted); font-size: 11px;">@students.duet.edu.pk</small>
+
           </div>
+
           <div>
+
             <span style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; display: block;">Core Theme</span>
+
             <strong style="font-size: 14px; color: var(--green);">Applied Cryptography &amp; CIA Triad Defense</strong>
+
             <small style="display: block; color: var(--muted); font-size: 11px;">Why DUETCLOCK &gt; WhatsApp &amp; Telegram</small>
+
           </div>
+
           <div>
+
             <span style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; display: block;">Technology Stack</span>
+
             <strong style="font-size: 14px; color: var(--ink);">Next.js · FastAPI · Supabase · WebCrypto</strong>
+
             <small style="display: block; color: var(--muted); font-size: 11px;">RSA-OAEP · AES-256-GCM · PBKDF2</small>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Dawood University of Engineering &amp; Technology · Information Security</span>
+
         <span>Slide 01 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 2: THE INDUSTRY DILEMMA ==================== -->
+
     <section class="slide" id="slide-2">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">The Problem Space</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">THE ILLUSION OF PRIVACY</span>
+
             <h2>Why Commercial Messengers Fall Short</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               Commercial platforms trade user privacy for metadata mining, cellular carrier dependence, and centralized key custody.
+
             </p>
 
+
+
             <ul class="bullet-list">
+
               <li>
+
                 <div class="icon-bullet" style="background: #fbeae8; color: var(--danger);">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>Telegram's Dangerous Default:</strong>
+
                   All standard 1-on-1 and group chats are stored in decrypted form on Telegram servers. The server holds the decryption keys.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet" style="background: #fbeae8; color: var(--danger);">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>WhatsApp's Closed Metadata Mining:</strong>
+
                   While Signal protocol encrypts the message body, Meta's closed-source binary mines timestamps, social graphs, IP addresses, and contact books.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet" style="background: #fbeae8; color: var(--danger);">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>SIM-Swapping &amp; SS7 Vulnerability:</strong>
+
                   Both platforms bind account identity to phone numbers, making them vulnerable to cellular carrier bribery and SS7 telecom interception.
+
                 </div>
+
               </li>
+
             </ul>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 1 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot" style="background: #ff5f56;"></span>
+
               <span class="frame-dot" style="background: #ffbd2e;"></span>
+
               <span class="frame-dot" style="background: #27c93f;"></span>
+
               <span class="frame-url">https://keyclock-app.vercel.app</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-1">
-              <img src="presentation_images/slide2_landing.jpg" alt="DUETCLOCK Landing Page & Domain Fencing" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide2_landing.jpg" alt="DUETCLOCK Landing Page & Domain Fencing" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Confidentiality, Integrity, Availability Defense Deck</span>
+
         <span>Slide 02 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 3: PILLAR 1 - CONFIDENTIALITY ==================== -->
+
     <section class="slide" id="slide-3">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Pillar 1 · Confidentiality</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">ZERO-KNOWLEDGE ARCHITECTURE</span>
+
             <h2>Client-Side Cryptographic Vault</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               Plaintext messages and unencrypted private keys <strong>never touch the network</strong>.
+
             </p>
 
-            <div class="spec-card">
-              <h3>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
-                  <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9m-4 4a5 5 0 1 0 7-7 5 5 0 0 0-7 7z"/>
-                </svg>
-                Dual-Envelope Asymmetric Encryption
-              </h3>
-              <p>Each message generates an ephemeral <code>AES-256-GCM</code> key in browser RAM, wrapped using the recipient's <code>RSA-OAEP 2048-bit</code> public key.</p>
-            </div>
+
 
             <div class="spec-card">
+
               <h3>
+
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+
+                  <path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9m-4 4a5 5 0 1 0 7-7 5 5 0 0 0-7 7z"/>
+
                 </svg>
-                Zero-Knowledge Key Custody
+
+                Dual-Envelope Asymmetric Encryption
+
               </h3>
-              <p>Private keys are encrypted client-side with <code>PBKDF2</code> (100,000 SHA-256 rounds + 16-byte salt) before upload. Neither Render nor Supabase can decrypt keys.</p>
+
+              <p>Each message generates an ephemeral <code>AES-256-GCM</code> key in browser RAM, wrapped using the recipient's <code>RSA-OAEP 2048-bit</code> public key.</p>
+
             </div>
+
+
+
+            <div class="spec-card">
+
+              <h3>
+
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
+
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+
+                </svg>
+
+                Zero-Knowledge Key Custody
+
+              </h3>
+
+              <p>Private keys are encrypted client-side with <code>PBKDF2</code> (100,000 SHA-256 rounds + 16-byte salt) before upload. Neither Render nor Supabase can decrypt keys.</p>
+
+            </div>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 2 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span>
+
               <span class="frame-url">Security Inspector · Key Vault &amp; DB View</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-2">
-              <img src="presentation_images/slide3_db_decryption.jpg" alt="Database vs Client Decryption: What Supabase Stores vs What You See" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide3_db_decryption.jpg" alt="Database vs Client Decryption: What Supabase Stores vs What You See" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Web Crypto API · NIST Standard Algorithms</span>
+
         <span>Slide 03 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 4: PILLAR 2 - INTEGRITY & AEAD ==================== -->
+
     <section class="slide" id="slide-4">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Pillar 2 · Integrity</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">TAMPER-PROOF DATA ASSURANCE</span>
+
             <h2>Authenticated Encryption (AEAD)</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               Detecting and preventing unauthorized data manipulation both in transit and at rest.
+
             </p>
 
+
+
             <ul class="bullet-list">
+
               <li>
+
                 <div class="icon-bullet">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>128-bit Galois Authentication Tag:</strong>
+
                   <code>AES-256-GCM</code> calculates a cryptographic MAC. Corrupting even 1 single bit in the database triggers an instantaneous decryption rejection.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>TOTP Replay Protection:</strong>
+
                   The backend increments a monotonic <code>last_counter</code> integer, preventing attackers from replaying captured 6-digit TOTP codes within the 30s window.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">
+
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
                 </div>
+
                 <div>
+
                   <strong>Constant-Time Verification:</strong>
+
                   Cryptographic comparisons use <code>secrets.compare_digest</code> to defeat timing side-channel attacks.
+
                 </div>
+
               </li>
+
             </ul>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 3 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span>
+
               <span class="frame-url">Interactive AEAD Attack Simulator</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-3">
-              <img src="presentation_images/slide4_aead_tamper.jpg" alt="Interactive AEAD Integrity Attack Caught" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide4_aead_tamper.jpg" alt="Interactive AEAD Integrity Attack Caught" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>AEAD Integrity Validation · Monotonic Replay Fencing</span>
+
         <span>Slide 04 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 5: PILLAR 3 - AVAILABILITY ==================== -->
+
     <section class="slide" id="slide-5">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Pillar 3 · Availability</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">RESILIENCE &amp; FAULT TOLERANCE</span>
+
             <h2>Service Continuity &amp; Disaster Recovery</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               Protecting central infrastructure from denial of service while guaranteeing user disaster recovery.
+
             </p>
 
+
+
             <div class="spec-card">
+
               <h3>
+
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
+
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+
                 </svg>
+
                 Zero-CPU Crypto Offloading
+
               </h3>
+
               <p>Cryptographic computation is offloaded 100% to client hardware using browser Web Crypto APIs, preventing Cryptographic Denial of Service (Crypto-DoS) on server CPUs.</p>
+
             </div>
 
+
+
             <div class="spec-card">
+
               <h3>
+
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
+
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+
                 </svg>
+
                 Atomic Sliding Throttles
+
               </h3>
+
               <p>Database-backed rate limiters enforce 5-attempt OTP lockouts and atomic IP/account request limits to neutralize brute-force attacks.</p>
+
             </div>
 
+
+
             <div class="spec-card">
+
               <h3>
+
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
+
                   <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+
                 </svg>
+
                 8 Disaster Recovery Codes
+
               </h3>
+
               <p>If a student loses or destroys their phone, 8 high-entropy one-time recovery codes (stored as SHA-256 digests) guarantee access recovery.</p>
+
             </div>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 4 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span>
+
               <span class="frame-url">Enrollment · 2FA QR &amp; 8 Recovery Codes</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-4">
-              <img src="presentation_images/slide5_totp.png" alt="Authenticator 2FA Verification" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide5_totp.png" alt="Authenticator 2FA Verification" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Disaster Recovery Tolerance · Sliding Rate Limits</span>
+
         <span>Slide 05 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 6: ANTI-MITM SAFETY NUMBERS ==================== -->
+
     <section class="slide" id="slide-6">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Anti-MITM Verification</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">SOLVING THE PKI TRUST DILEMMA</span>
+
             <h2>60-Digit Cryptographic Safety Numbers</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               Mathematical defense against Key Substitution Attacks without relying on centralized Certificate Authorities.
+
             </p>
 
+
+
             <ul class="bullet-list">
+
               <li>
+
                 <div class="icon-bullet">1</div>
+
                 <div>
+
                   <strong>The Man-In-The-Middle Threat:</strong>
+
                   In standard PKI, a rogue database administrator could swap Alice's public key with Mallory's key to intercept messages.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">2</div>
+
                 <div>
+
                   <strong>Deterministic Pairwise Hashing:</strong>
+
                   DUETCLOCK sorts both students' public keys lexicographically and iteratively hashes them to compute an identical 60-digit number on both devices.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">3</div>
+
                 <div>
+
                   <strong>Out-of-Band Attestation:</strong>
+
                   Students verify this 60-digit sequence verbally or in class. If either key was altered by 1 bit, the digits diverge completely.
+
                 </div>
+
               </li>
+
             </ul>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 5 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span>
+
               <span class="frame-url">Security Inspector · Anti-MITM Tool</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-5">
-              <img src="presentation_images/slide6_safety_numbers.png" alt="Cryptographic Safety Numbers & Anti-MITM" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide6_safety_numbers.png" alt="Cryptographic Safety Numbers & Anti-MITM" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Deterministic Key Fingerprinting · Man-in-the-Middle Defense</span>
+
         <span>Slide 06 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 7: HEAD-TO-HEAD MATRIX ==================== -->
+
     <section class="slide" id="slide-7">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Competitive Analysis</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <span class="eyebrow">HEAD-TO-HEAD BENCHMARK</span>
+
         <h2 style="margin-bottom: 14px;">DUETCLOCK vs. WhatsApp vs. Telegram</h2>
 
+
+
         <table class="comp-table">
+
           <thead>
+
             <tr>
+
               <th style="width: 22%;">Security Dimension</th>
+
               <th style="width: 26%;">Telegram</th>
+
               <th style="width: 26%;">WhatsApp</th>
+
               <th style="width: 26%;" class="comp-highlight">DUETCLOCK (Our Project)</th>
+
             </tr>
+
           </thead>
+
           <tbody>
+
             <tr>
+
               <td><strong>Default E2EE</strong></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>NOT by default</span><br><small>Cloud chats store server-side keys</small></td>
+
               <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Default E2EE</span><br><small>Signal Protocol</small></td>
+
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>100% Mandatory E2EE</span><br><small>Plaintext physically never leaves RAM</small></td>
+
             </tr>
+
             <tr>
+
               <td><strong>Cryptographic Standards</strong></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Proprietary &ldquo;MTProto&rdquo;</span><br><small>Custom non-standard MAC</small></td>
+
               <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Signal Protocol</span><br><small>Noise Double Ratchet</small></td>
+
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>W3C &amp; NIST Standards</span><br><small>RSA-OAEP, AES-256-GCM, PBKDF2</small></td>
+
             </tr>
+
             <tr>
+
               <td><strong>Server Trust Model</strong></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Complete Server Trust</span><br><small>Telegram holds message keys</small></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Closed Trust Model</span><br><small>Meta manages closed key distribution</small></td>
+
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>True Zero-Knowledge</span><br><small>Database only holds encrypted ciphertext</small></td>
+
             </tr>
+
             <tr>
+
               <td><strong>Metadata Harvesting</strong></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>High Metadata Logging</span><br><small>Contacts, IPs, group rosters</small></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Commercial Metadata Mining</span><br><small>Social graphs, timing, telemetry</small></td>
+
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Zero Metadata Harvesting</span><br><small>Isolated educational boundary</small></td>
+
             </tr>
+
             <tr>
+
               <td><strong>Identity Attack Vector</strong></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>SIM-Swap Vulnerable</span><br><small>Cellular SMS phone numbers</small></td>
+
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>SIM-Swap Vulnerable</span><br><small>Carrier takeover susceptibility</small></td>
+
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>SIM-Swap Immune</span><br><small>@students.duet.edu.pk + RFC 6238 TOTP</small></td>
+
             </tr>
+
           </tbody>
+
         </table>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Formal Security Analysis · Threat Model STRIDE</span>
+
         <span>Slide 07 / 08</span>
+
       </footer>
+
     </section>
+
+
 
     <!-- ==================== SLIDE 8: SUMMARY & DEMO ==================== -->
+
     <section class="slide" id="slide-8">
+
       <header class="slide-header">
+
         <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
         <span class="slide-badge">Live Demonstration</span>
+
       </header>
 
+
+
       <div class="slide-content">
+
         <div class="two-col">
+
           <div class="col-left">
+
             <span class="eyebrow">DEMONSTRATION ROADMAP</span>
+
             <h2>What We Are Presenting Live</h2>
+
             <p class="lead" style="font-size: 13.5px; margin-bottom: 14px;">
+
               A 3-minute interactive demonstration proving each cryptographic guarantee on a running system.
+
             </p>
 
+
+
             <ul class="bullet-list">
+
               <li>
+
                 <div class="icon-bullet">1</div>
+
                 <div>
+
                   <strong>Domain Fencing &amp; TOTP Setup:</strong>
+
                   Live signup with <code>@students.duet.edu.pk</code>, Google Authenticator enrollment, and recovery code issuance.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">2</div>
+
                 <div>
+
                   <strong>Dual-Envelope Text Delivery:</strong>
+
                   Sending an end-to-end encrypted message and inspecting the raw AES/RSA ciphertext blobs in Supabase PostgreSQL.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">3</div>
+
                 <div>
+
                   <strong>Interactive AEAD Tamper Attack:</strong>
+
                   Corrupting 1 byte in the live inspector and witnessing the client-side cryptographic rejection.
+
                 </div>
+
               </li>
+
               <li>
+
                 <div class="icon-bullet">4</div>
+
                 <div>
+
                   <strong>Pairwise Safety Numbers:</strong>
+
                   Verifying the 60-digit identity fingerprint between two students.
+
                 </div>
+
               </li>
+
             </ul>
+
           </div>
+
+
 
           <!-- SCREENSHOT SLOT 6 -->
+
           <div class="screenshot-frame">
+
             <div class="screenshot-frame-bar">
+
               <span class="frame-dot"></span><span class="frame-dot"></span><span class="frame-dot"></span>
+
               <span class="frame-url">Security Inspector · Full Audit Overview</span>
+
             </div>
+
             <div class="screenshot-img-box" id="slot-6">
-              <img src="presentation_images/slide8_cia_triad.png" alt="CIA Triad Verification Cards" style="width: 100%; height: 100%; object-fit: contain; background: #fdfcf7;">
+
+              <img src="presentation_images/slide8_cia_triad.png" alt="CIA Triad Verification Cards" style="width: 100%; height: 100%; object-fit: contain; background: #f5f5ed;">
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
+
+
       <footer class="slide-footer">
+
         <span>Dawood University of Engineering &amp; Technology · Thank You!</span>
+
         <span>Slide 08 / 08</span>
+
       </footer>
+
     </section>
+
+
 
   </div>
 
+
+
   <script>
+
     // Smooth Keyboard Navigation for presentation mode
+
     let currentSlide = 1;
+
     const totalSlides = 8;
 
+
+
     function scrollToSlide(direction) {
+
       currentSlide = Math.min(Math.max(1, currentSlide + direction), totalSlides);
+
       const target = document.getElementById(`slide-${currentSlide}`);
+
       if (target) {
+
         target.scrollIntoView({ behavior: 'smooth' });
+
       }
+
     }
 
+
+
     window.addEventListener('keydown', (e) => {
+
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+
         e.preventDefault();
+
         scrollToSlide(1);
+
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+
         e.preventDefault();
+
         scrollToSlide(-1);
+
       }
+
     });
+
   </script>
+
 </body>
+
 </html>
+
