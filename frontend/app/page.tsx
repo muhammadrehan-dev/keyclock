@@ -54,6 +54,7 @@ export default function Home() {
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [codes, setCodes] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
+  const [keyResetPrompt, setKeyResetPrompt] = useState<{ password: string; totpCode: string } | null>(null);
   const pwdRef = useRef('');
 
   useEffect(() => {
@@ -69,21 +70,69 @@ export default function Home() {
     setShowPassword(false);
   }
 
-  async function initE2EEKeys(enteredPassword: string) {
+  async function initE2EEKeys(enteredPassword: string, totpCode?: string): Promise<boolean> {
     try {
       const keysData = await api('keys');
       if (keysData.encrypted_private_key && keysData.public_key) {
-        const privateKey = await decryptPrivateKeyWithPassword(keysData.encrypted_private_key, enteredPassword);
-        await savePrivateKeyToSession(privateKey);
+        try {
+          const { privateKey, needsRewrap, jwk } = await decryptPrivateKeyWithPassword(keysData.encrypted_private_key, enteredPassword);
+          await savePrivateKeyToSession(jwk);
+          if (needsRewrap) {
+            try {
+              const rewrapped = await encryptPrivateKeyWithPassword(jwk, enteredPassword, 600000);
+              await api('keys', {
+                public_key: keysData.public_key,
+                encrypted_private_key: rewrapped,
+              });
+            } catch (rewrapErr) {
+              console.warn('Note: re-wrapping key bundle postponed:', rewrapErr);
+            }
+          }
+          return true;
+        } catch (decryptErr) {
+          console.warn('Could not decrypt stored private key with current password:', decryptErr);
+          setKeyResetPrompt({
+            password: enteredPassword,
+            totpCode: totpCode || '',
+          });
+          return false;
+        }
       } else {
         const keyPair = await generateE2EEKeyPair();
         const pubJwk = await exportPublicKey(keyPair.publicKey);
-        const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, enteredPassword);
+        const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, enteredPassword, 600000);
         await api('keys', { public_key: pubJwk, encrypted_private_key: encPriv });
-        await savePrivateKeyToSession(keyPair.privateKey);
+        const privJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+        await savePrivateKeyToSession(privJwk);
+        return true;
       }
     } catch (err) {
       console.error('E2EE key initialization error:', err);
+      return true;
+    }
+  }
+
+  async function handleResetKeypair() {
+    if (!keyResetPrompt) return;
+    setBusy(true); setError('');
+    try {
+      const keyPair = await generateE2EEKeyPair();
+      const pubJwk = await exportPublicKey(keyPair.publicKey);
+      const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, keyResetPrompt.password, 600000);
+      await api('keys', {
+        public_key: pubJwk,
+        encrypted_private_key: encPriv,
+        code: keyResetPrompt.totpCode,
+      });
+      const privJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+      await savePrivateKeyToSession(privJwk);
+      setKeyResetPrompt(null);
+      setNotice('New encryption keypair generated successfully.');
+      change('session');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not generate new keypair.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -98,6 +147,36 @@ export default function Home() {
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not resend verification email.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifiedNotice() {
+    setBusy(true); setError(''); setNotice('');
+    try {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        if (auth.currentUser.emailVerified) {
+          const idToken = await auth.currentUser.getIdToken();
+          try {
+            const data = await api('signup', { id_token: idToken, name: auth.currentUser.displayName || name.trim() || 'DUET Student' });
+            change(data.step);
+            if (data.step === 'enroll') setEnrollment(await api('enroll'));
+            return;
+          } catch (signupErr: unknown) {
+            if (signupErr instanceof Error && signupErr.message.includes('already in use')) {
+              change('login');
+              return;
+            }
+            throw signupErr;
+          }
+        }
+      }
+      change('login');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Please sign in to continue.');
+      change('login');
     } finally {
       setBusy(false);
     }
@@ -127,16 +206,6 @@ export default function Home() {
           throw new Error((fbErr as Error).message || 'Firebase registration failed.');
         }
 
-        // 2. Register account on backend
-        try {
-          await api('signup', { name: name.trim(), email: cleanEmail, password });
-        } catch (backendErr: unknown) {
-          // If already registered on backend, ignore conflict
-          if (!(backendErr instanceof Error && backendErr.message.includes('already in use'))) {
-            console.error('Backend registration note:', backendErr);
-          }
-        }
-
         change('verify-notice');
       } else if (step === 'login') {
         if (!isDuetEmail(cleanEmail)) {
@@ -144,12 +213,14 @@ export default function Home() {
         }
 
         // 1. Verify in Firebase and check if email is verified
+        let idToken = '';
         try {
           const userCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
           await userCred.user.reload();
           if (!userCred.user.emailVerified) {
             throw new Error('Your email is not verified yet! Please click the 1-click verification link sent to your DUET inbox. You can also resend it below.');
           }
+          idToken = await userCred.user.getIdToken();
         } catch (fbErr: unknown) {
           const code = (fbErr as { code?: string })?.code;
           if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
@@ -158,31 +229,9 @@ export default function Home() {
           throw fbErr;
         }
 
-        // 2. Sign in to Keyclock backend session
+        // 2. Sign in to Keyclock backend session using verified Firebase ID token
         pwdRef.current = password;
-        let data;
-        try {
-          data = await api('login', { email: cleanEmail, password });
-        } catch (loginErr: unknown) {
-          // If login failed, sync password or auto-provision student in Supabase
-          if (loginErr instanceof Error && loginErr.message.includes('Incorrect email or password')) {
-            try {
-              await api('reset-password', { email: cleanEmail, password });
-              data = await api('login', { email: cleanEmail, password });
-            } catch (resetErr: unknown) {
-              // If student exists and verified in Firebase but was missed by Supabase (e.g. Render cold start), auto-provision now
-              if (resetErr instanceof Error && (resetErr.message.includes('User not found') || resetErr.message.includes('404'))) {
-                const displayName = auth.currentUser?.displayName || 'DUET Student';
-                await api('signup', { name: displayName, email: cleanEmail, password });
-                data = await api('login', { email: cleanEmail, password });
-              } else {
-                throw resetErr;
-              }
-            }
-          } else {
-            throw loginErr;
-          }
-        }
+        const data = await api('login', { id_token: idToken });
 
         setPassword('');
         change(data.step);
@@ -195,14 +244,19 @@ export default function Home() {
         setNotice('Password reset link sent! Check your DUET inbox to set a new password.');
       } else {
         // MFA verification or enrollment confirmation
+        const lastCode = code;
         const data = await api(step === 'enroll' ? 'enroll/confirm' : 'verify', { code, recovery: step === 'recovery' });
         setCode(''); setEnrollment(null);
+        let keyInitOk = true;
         if (pwdRef.current) {
-          await initE2EEKeys(pwdRef.current);
+          keyInitOk = await initE2EEKeys(pwdRef.current, lastCode);
           pwdRef.current = '';
         }
         if (data.recovery_codes) {
           setName(data.name); setEmail(data.email); setCodes(data.recovery_codes); setSaved(false); change('saved');
+        } else if (!keyInitOk) {
+          const profile = await api('me');
+          setEmail(profile.email); setName(profile.name);
         } else {
           const profile = await api('me');
           setEmail(profile.email); setName(profile.name); change('session');
@@ -277,17 +331,36 @@ export default function Home() {
               <button type="button" disabled={busy} className={step === 'signup' ? 'active' : ''} onClick={() => change('signup')}>Create account</button>
             </div>
           )}
-          <h2 id="form-title">{titles[step]}</h2>
-          <p className="description">{descriptions[step]}</p>
+          <h2 id="form-title">{keyResetPrompt ? 'Encryption Key Inaccessible' : titles[step]}</h2>
+          <p className="description">{keyResetPrompt ? 'Your account password was recently changed or reset.' : descriptions[step]}</p>
           {error && <div className="error" role="alert">{error}</div>}
           {notice && <div className="send-success" style={{ margin: '15px 0' }} role="status"><CheckIcon size={14} style={{ marginRight: 4 }} /> {notice}</div>}
+
+          {keyResetPrompt ? (
+            <div style={{ background: '#fff0e9', border: '1px solid #ffd4c2', borderRadius: 10, padding: 16, margin: '16px 0' }} role="alert">
+              <strong style={{ color: '#be2e15', display: 'block', marginBottom: 6 }}>Password Reset Detected</strong>
+              <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.5, margin: '0 0 12px' }}>
+                Your account password was recently changed, so your existing private key cannot be unlocked with the new password.
+                <br /><br />
+                <strong>Warning:</strong> Generating a new keypair lets you send and receive new messages, but previously received encrypted messages can no longer be decrypted.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" className="primary" style={{ padding: '8px 16px', fontSize: 13 }} disabled={busy} onClick={handleResetKeypair}>
+                  {busy ? 'Generating Keypair…' : 'Generate New Keypair ↗'}
+                </button>
+                <button type="button" className="text-button" style={{ margin: 0, fontSize: 13 }} disabled={busy} onClick={() => { setKeyResetPrompt(null); change('session'); }}>
+                  Skip for now
+                </button>
+              </div>
+            </div>
+          ) : <>
 
           {step === 'verify-notice' && (
             <div>
               <p className="intro" style={{ marginBottom: '20px' }}>
                 Please check your inbox at <strong>{email}</strong> (check Spam or Junk folder if not in primary inbox). Click the verification link inside, then return here to sign in.
               </p>
-              <button className="primary" type="button" onClick={() => change('login')}>
+              <button className="primary" type="button" onClick={handleVerifiedNotice}>
                 I have verified my email → Sign in <span>↗</span>
               </button>
               <button className="text-button" type="button" disabled={busy} onClick={resendVerification}>
@@ -449,6 +522,7 @@ export default function Home() {
             </>
           )}
           {['enroll', 'mfa', 'recovery'].includes(step) && <button className="text-button" disabled={busy} onClick={logout}>Back to sign in</button>}
+          </>}
           <div className="card-footer"><span aria-hidden="true">◇</span> Exclusively for Dawood UET Students.</div>
         </>}
       </section>

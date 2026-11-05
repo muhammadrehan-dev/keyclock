@@ -21,7 +21,7 @@ function base64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
-async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveWrappingKey(password: string, salt: Uint8Array, iterations: number = 600000): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey(
     'raw',
@@ -34,7 +34,7 @@ async function deriveWrappingKey(password: string, salt: Uint8Array): Promise<Cr
     {
       name: 'PBKDF2',
       salt: salt as unknown as BufferSource,
-      iterations: 100000,
+      iterations,
       hash: 'SHA-256',
     },
     baseKey,
@@ -73,45 +73,77 @@ export async function importPublicKey(jwkString: string): Promise<CryptoKey> {
   );
 }
 
-export async function encryptPrivateKeyWithPassword(privateKey: CryptoKey, password: string): Promise<string> {
-  const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+function isJsonWebKey(key: CryptoKey | JsonWebKey): key is JsonWebKey {
+  return typeof (key as JsonWebKey).kty === 'string';
+}
+
+export async function encryptPrivateKeyWithPassword(
+  privateKey: CryptoKey | JsonWebKey,
+  password: string,
+  iterations: number = 600000
+): Promise<string> {
+  const jwk = isJsonWebKey(privateKey) ? privateKey : await crypto.subtle.exportKey('jwk', privateKey);
   const jwkBytes = new TextEncoder().encode(JSON.stringify(jwk));
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const wrappingKey = await deriveWrappingKey(password, salt);
+  const wrappingKey = await deriveWrappingKey(password, salt, iterations);
   const encryptedBytes = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     wrappingKey,
     jwkBytes
   );
   return JSON.stringify({
-    v: 1,
+    v: 2,
+    iter: iterations,
     salt: bytesToBase64(salt),
     iv: bytesToBase64(iv),
     ct: bytesToBase64(new Uint8Array(encryptedBytes)),
   });
 }
 
-export async function decryptPrivateKeyWithPassword(encryptedBundleStr: string, password: string): Promise<CryptoKey> {
-  const bundle = JSON.parse(encryptedBundleStr);
+export interface DecryptedPrivateKey {
+  privateKey: CryptoKey;
+  needsRewrap: boolean;
+  jwk: JsonWebKey;
+}
+
+export async function decryptPrivateKeyWithPassword(
+  encryptedBundleStr: string,
+  password: string
+): Promise<DecryptedPrivateKey> {
+  let bundle;
+  try {
+    bundle = JSON.parse(encryptedBundleStr);
+  } catch {
+    throw new Error('Invalid key bundle format.');
+  }
   const salt = base64ToBytes(bundle.salt);
   const iv = base64ToBytes(bundle.iv);
   const ct = base64ToBytes(bundle.ct);
-  const wrappingKey = await deriveWrappingKey(password, salt);
-  const decryptedBytes = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: iv as unknown as BufferSource },
-    wrappingKey,
-    ct as unknown as BufferSource
-  );
+  const iterations = bundle.iter || (bundle.v === 1 ? 100000 : 600000);
+  const wrappingKey = await deriveWrappingKey(password, salt, iterations);
+  let decryptedBytes: ArrayBuffer;
+  try {
+    decryptedBytes = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as unknown as BufferSource },
+      wrappingKey,
+      ct as unknown as BufferSource
+    );
+  } catch {
+    throw new Error('Could not decrypt private key with your account password. If you recently reset your password via email, your old key cannot be unlocked with the new password.');
+  }
   const jwkStr = new TextDecoder().decode(decryptedBytes);
-  const jwk = JSON.parse(jwkStr);
-  return crypto.subtle.importKey(
+  const jwk: JsonWebKey = JSON.parse(jwkStr);
+  // Import as non-extractable in memory for enhanced security
+  const privateKey = await crypto.subtle.importKey(
     'jwk',
     jwk,
     { name: 'RSA-OAEP', hash: 'SHA-256' },
-    true,
+    false,
     ['decrypt']
   );
+  const needsRewrap = bundle.v < 2 || !bundle.iter || bundle.iter < 600000;
+  return { privateKey, needsRewrap, jwk };
 }
 
 export async function encryptE2EEMessage(
@@ -214,10 +246,18 @@ export async function decryptE2EEMessage(
 
 const SESSION_KEY = 'keyclock_e2ee_private_key_jwk';
 
-export async function savePrivateKeyToSession(privateKey: CryptoKey): Promise<void> {
+export async function savePrivateKeyToSession(keyOrJwk: CryptoKey | JsonWebKey): Promise<void> {
   if (typeof window === 'undefined') return;
-  const jwk = await crypto.subtle.exportKey('jwk', privateKey);
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(jwk));
+  try {
+    if (isJsonWebKey(keyOrJwk)) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(keyOrJwk));
+    } else if (keyOrJwk.extractable) {
+      const jwk = await crypto.subtle.exportKey('jwk', keyOrJwk);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(jwk));
+    }
+  } catch {
+    // If not extractable or storage full, ignore
+  }
 }
 
 export async function loadPrivateKeyFromSession(): Promise<CryptoKey | null> {
@@ -226,11 +266,12 @@ export async function loadPrivateKeyFromSession(): Promise<CryptoKey | null> {
   if (!saved) return null;
   try {
     const jwk = JSON.parse(saved);
+    // Keep private key non-extractable in memory
     return await crypto.subtle.importKey(
       'jwk',
       jwk,
       { name: 'RSA-OAEP', hash: 'SHA-256' },
-      true,
+      false,
       ['decrypt']
     );
   } catch {
@@ -243,8 +284,20 @@ export function clearPrivateKeyFromSession(): void {
   sessionStorage.removeItem(SESSION_KEY);
 }
 
-export async function exportPrivateKeyToJwk(privateKey: CryptoKey): Promise<JsonWebKey> {
-  return await crypto.subtle.exportKey('jwk', privateKey);
+// Clear sensitive keys from sessionStorage on tab close / pagehide
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    clearPrivateKeyFromSession();
+  });
+}
+
+export async function exportPrivateKeyToJwk(privateKey: CryptoKey): Promise<JsonWebKey | null> {
+  if (!privateKey.extractable) return null;
+  try {
+    return await crypto.subtle.exportKey('jwk', privateKey);
+  } catch {
+    return null;
+  }
 }
 
 export function parseEnvelope(ciphertextPayload: string): { v: number; iv: string; key: string; ct: string; rawJson: string } | null {

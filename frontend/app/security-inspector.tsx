@@ -119,7 +119,11 @@ export default function SecurityInspector({
     if (userPrivateKey) {
       exportPrivateKeyToJwk(userPrivateKey)
         .then(jwk => {
-          setRevealedPrivateKeyJwk(JSON.stringify(jwk, null, 2));
+          if (jwk) {
+            setRevealedPrivateKeyJwk(JSON.stringify(jwk, null, 2));
+          } else {
+            setRevealedPrivateKeyJwk('[Non-extractable RSA private key protected in WebCrypto memory]');
+          }
         })
         .catch(err => {
           console.error('Error exporting private JWK:', err);

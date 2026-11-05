@@ -8,7 +8,6 @@ const allowed: Record<string, string[]> = {
   messages: ['GET', 'POST'],
   users: ['GET'],
   keys: ['GET', 'POST'],
-  'reset-password': ['POST'],
 };
 const cookie = 'keyclock_session';
 
@@ -38,11 +37,13 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     const query = new URLSearchParams();
     if (path === 'users' && request.nextUrl.searchParams.has('after')) query.set('after', request.nextUrl.searchParams.get('after')!);
     if (path === 'keys' && request.nextUrl.searchParams.has('email')) query.set('email', request.nextUrl.searchParams.get('email')!);
+    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '';
     const upstream = await fetch(`${backend.replace(/\/$/, '')}/auth/${path}${query.size ? `?${query}` : ''}`, {
       method: request.method,
       headers: {
         'Content-Type': 'application/json', 'X-Internal-Key': key,
         Authorization: `Bearer ${request.cookies.get(cookie)?.value ?? ''}`,
+        ...(clientIp ? { 'X-Forwarded-For': clientIp } : {}),
       },
       body, cache: 'no-store', signal: AbortSignal.timeout(55000), redirect: 'error',
     });
@@ -52,7 +53,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     // Keep validation details readable without reflecting submitted credentials.
     if (Array.isArray(data.detail)) {
       const invalidName = data.detail.some((issue: { loc?: unknown[] }) => issue.loc?.includes('name'));
-      data.detail = path === 'messages' ? 'Enter a valid recipient email and a message of 1–2,000 characters.' : invalidName ? 'Enter a name between 1 and 100 characters.' : 'Check your email and use a password of 12–128 characters.';
+      data.detail = path === 'messages' ? 'Enter a valid recipient email and a message of 1–8,192 characters.' : invalidName ? 'Enter a name between 1 and 100 characters.' : 'Check your email and use a password of 12–128 characters.';
     }
     const response = NextResponse.json(data, { status: upstream.status, headers: { 'Cache-Control': 'no-store' } });
     if (upstream.headers.has('retry-after')) response.headers.set('Retry-After', upstream.headers.get('retry-after')!);

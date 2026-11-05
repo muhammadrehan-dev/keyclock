@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import io
+import logging
 import os
 import re
 import secrets
@@ -13,13 +14,16 @@ import qrcode
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from pwdlib import PasswordHash
 from sqlalchemy import Boolean, ForeignKey, Integer, String, create_engine, delete, func, inspect, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 load_dotenv()
+logger = logging.getLogger('duetclock')
+_google_request = google_requests.Request()
 API_KEY = os.environ['INTERNAL_API_KEY']
 if len(API_KEY) < 32:
     raise RuntimeError('INTERNAL_API_KEY must be at least 32 characters')
@@ -28,8 +32,6 @@ url = os.getenv('DATABASE_URL', 'sqlite:///./totp.db')
 if url.startswith(('postgres://', 'postgresql://')):
     url = 'postgresql+psycopg://' + url.split('://', 1)[1]
 engine = create_engine(url, pool_pre_ping=True, connect_args={'check_same_thread': False} if url.startswith('sqlite') else {})
-passwords = PasswordHash.recommended()
-dummy_hash = passwords.hash(secrets.token_urlsafe(32))
 
 
 class Base(DeclarativeBase):
@@ -41,7 +43,6 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(254), unique=True)
     name: Mapped[str] = mapped_column(String(100), server_default='')
-    password: Mapped[str] = mapped_column(String(512))
     secret: Mapped[str] = mapped_column(String(512))
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     last_counter: Mapped[int] = mapped_column(Integer, default=-1)
@@ -85,6 +86,14 @@ def initialize_database():
     with engine.begin() as connection:
         user_cols = {column['name'] for column in inspect(connection).get_columns('users')}
         optional = 'IF NOT EXISTS ' if connection.dialect.name == 'postgresql' else ''
+        if 'password' in user_cols:
+            try:
+                connection.execute(text("ALTER TABLE users DROP COLUMN password"))
+            except Exception:
+                try:
+                    connection.execute(text("ALTER TABLE users ALTER COLUMN password DROP NOT NULL"))
+                except Exception:
+                    pass
         if 'name' not in user_cols:
             connection.execute(text(f"ALTER TABLE users ADD COLUMN {optional}name VARCHAR(100) NOT NULL DEFAULT ''"))
         if 'public_key' not in user_cols:
@@ -146,6 +155,13 @@ def limit(key, maximum=10, seconds=300):
         raise HTTPException(429, 'Too many attempts. Please wait a few minutes.', headers={'Retry-After': str(seconds - now % seconds)})
 
 
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get('x-forwarded-for')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.client.host if request.client else '127.0.0.1'
+
+
 def issue(db, user, scope, lifetime):
     token = secrets.token_urlsafe(32)
     db.add(Ticket(digest=digest(token), user_id=user.id, scope=scope, expires=int(time.time()) + lifetime))
@@ -165,13 +181,15 @@ def consume(db, found):
         raise HTTPException(401, 'This sign-in request has already been used.')
 
 
-def check_code(db, user, code):
+def check_code(db, user, code, allow_current=False):
     if not re.fullmatch(r'[0-9]{6}', code):
         raise HTTPException(400, 'Enter a six-digit authenticator code.')
     totp = pyotp.TOTP(cipher.decrypt(user.secret.encode()).decode())
     current = int(time.time()) // 30
     for counter in (current, current - 1, current + 1):
         if secrets.compare_digest(totp.at(counter * 30), code):
+            if allow_current and user.last_counter == counter:
+                return
             changed = db.execute(update(User).where(User.id == user.id, User.last_counter < counter).values(last_counter=counter)).rowcount
             if changed:
                 return
@@ -179,17 +197,50 @@ def check_code(db, user, code):
     raise HTTPException(401, 'Invalid or already-used code. Try the next code in your app.')
 
 
-class Credentials(BaseModel):
-    email: EmailStr = Field(max_length=254)
-    password: str = Field(min_length=12, max_length=128)
+REQUIRED_EMAIL_DOMAIN = os.getenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk').strip().lower()
+FIREBASE_PROJECT_ID = os.getenv('FIREBASE_PROJECT_ID', 'duet-e2e-chat').strip()
 
 
-class Registration(Credentials):
-    name: str = Field(min_length=1, max_length=100)
+def verify_firebase_id_token(token_str: str) -> dict:
+    project_id = os.getenv('FIREBASE_PROJECT_ID', 'duet-e2e-chat').strip()
+    if not project_id:
+        raise HTTPException(500, 'Server configuration error: FIREBASE_PROJECT_ID is not configured.')
+    try:
+        claims = google_id_token.verify_firebase_token(
+            token_str,
+            _google_request,
+            audience=project_id,
+        )
+    except Exception as err:
+        raise HTTPException(401, f'Invalid authentication token: {err}')
 
-    @field_validator('name', mode='before')
+    if not claims.get('email_verified'):
+        raise HTTPException(401, 'Email address must be verified.')
+
+    email = (claims.get('email') or '').strip().lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk').strip().lower()
+    if required_domain and not email.endswith(required_domain):
+        raise HTTPException(400, f'Only {required_domain} email addresses are allowed.')
+
+    return claims
+
+
+class TokenAuth(BaseModel):
+    id_token: str = Field(min_length=1)
+
+    @field_validator('id_token', mode='before')
     @classmethod
-    def trim_name(cls, value):
+    def trim_token(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+
+class Registration(BaseModel):
+    id_token: str = Field(min_length=1)
+    name: str = Field(default='', max_length=100)
+
+    @field_validator('id_token', 'name', mode='before')
+    @classmethod
+    def trim_fields(cls, value):
         return value.strip() if isinstance(value, str) else value
 
 
@@ -212,8 +263,9 @@ class NewMessage(BaseModel):
 class KeyStore(BaseModel):
     public_key: str = Field(min_length=10, max_length=4096)
     encrypted_private_key: str = Field(min_length=10, max_length=8192)
+    code: str = Field(default='', max_length=40)
 
-    @field_validator('public_key', 'encrypted_private_key', mode='before')
+    @field_validator('public_key', 'encrypted_private_key', 'code', mode='before')
     @classmethod
     def trim_keys(cls, value):
         return value.strip() if isinstance(value, str) else value
@@ -230,16 +282,20 @@ def health():
 
 
 @app.post('/auth/signup', dependencies=private, status_code=201)
-def signup(data: Registration, db: Session = Depends(db_session)):
-    email = str(data.email).lower()
-    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
-    if required_domain and not email.endswith(required_domain):
-        raise HTTPException(400, f'Only {required_domain} email addresses are allowed to register.')
+def signup(data: Registration, request: Request, db: Session = Depends(db_session)):
+    claims = verify_firebase_id_token(data.id_token)
+    email = claims['email'].strip().lower()
+    ip = get_client_ip(request)
+    # Security Note: Global rate limits allow lockout abuse (where an attacker floods requests to
+    # exhaust the shared limit for everyone). Adding per-IP limits alongside per-account limits
+    # mitigates DoS while isolating abusive clients.
     limit('signup-global', 100, 3600)
+    limit('signup:ip:' + ip, 20, 3600)
     limit('signup:' + email, 10, 3600)
     if db.scalar(select(User.id).where(User.email == email)) is not None:
         raise HTTPException(409, 'This email is already in use. Please sign in instead.')
-    user = User(name=data.name, email=email, password=passwords.hash(data.password), secret=cipher.encrypt(pyotp.random_base32().encode()).decode())
+    name = data.name.strip() or claims.get('name', '').strip() or 'DUET Student'
+    user = User(name=name, email=email, secret=cipher.encrypt(pyotp.random_base32().encode()).decode())
     db.add(user)
     try:
         db.flush()
@@ -254,33 +310,18 @@ def signup(data: Registration, db: Session = Depends(db_session)):
     return {'token': token, 'step': 'enroll'}
 
 
-@app.post('/auth/reset-password', dependencies=private)
-def reset_password(data: Credentials, db: Session = Depends(db_session)):
-    email = str(data.email).lower()
-    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
-    if required_domain and not email.endswith(required_domain):
-        raise HTTPException(400, f'Only {required_domain} student email addresses are allowed.')
+@app.post('/auth/login', dependencies=private)
+def login(data: TokenAuth, request: Request, db: Session = Depends(db_session)):
+    claims = verify_firebase_id_token(data.id_token)
+    email = claims['email'].strip().lower()
+    ip = get_client_ip(request)
+    # Security Note: Global limits allow shared lockout abuse; per-IP and per-account limits provide isolated throttling.
+    limit('login-global', 300, 300)
+    limit('login:ip:' + ip, 30, 300)
     limit('login:' + email)
     user = db.scalar(select(User).where(User.email == email))
     if not user:
-        raise HTTPException(404, 'User not found.')
-    user.password = passwords.hash(data.password)
-    db.commit()
-    return {'ok': True}
-
-
-@app.post('/auth/login', dependencies=private)
-def login(data: Credentials, db: Session = Depends(db_session)):
-    email = str(data.email).lower()
-    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
-    if required_domain and not email.endswith(required_domain):
-        raise HTTPException(400, f'Only {required_domain} student email addresses are allowed.')
-    limit('login-global', 300, 300)
-    limit('login:' + email)
-    user = db.scalar(select(User).where(User.email == email))
-    valid = passwords.verify(data.password, user.password if user else dummy_hash)
-    if not user or not valid:
-        raise HTTPException(401, 'Incorrect email or password.')
+        raise HTTPException(401, 'Account not found. Please sign up first.')
     scope = 'mfa' if user.enabled else 'enroll'
     token = issue(db, user, scope, 300 if user.enabled else 600)
     db.commit()
@@ -301,8 +342,10 @@ def enroll(authorization: str = Header(default=''), db: Session = Depends(db_ses
 
 
 @app.post('/auth/enroll/confirm', dependencies=private)
-def confirm(data: Code, authorization: str = Header(default=''), db: Session = Depends(db_session)):
+def confirm(data: Code, request: Request, authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'enroll')
+    ip = get_client_ip(request)
+    limit('otp:ip:' + ip, 15, 300)
     limit('otp:' + str(found.user_id), 5)
     user = db.get(User, found.user_id)
     if user.enabled:
@@ -321,8 +364,10 @@ def confirm(data: Code, authorization: str = Header(default=''), db: Session = D
 
 
 @app.post('/auth/verify', dependencies=private)
-def verify(data: Code, authorization: str = Header(default=''), db: Session = Depends(db_session)):
+def verify(data: Code, request: Request, authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'mfa')
+    ip = get_client_ip(request)
+    limit('otp:ip:' + ip, 15, 300)
     limit('otp:' + str(found.user_id), 5)
     user = db.get(User, found.user_id)
     if data.recovery:
@@ -356,7 +401,7 @@ def get_keys(email: str = Query(default=''), authorization: str = Header(default
     found = ticket(db, authorization, 'session')
     if email:
         target_email = email.strip().lower()
-        required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+        required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk').strip().lower()
         if required_domain and not target_email.endswith(required_domain):
             raise HTTPException(400, f'Only {required_domain} keys can be queried.')
         target = db.scalar(select(User).where(User.email == target_email, User.enabled == True))
@@ -371,6 +416,20 @@ def get_keys(email: str = Query(default=''), authorization: str = Header(default
 def save_keys(data: KeyStore, authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'session')
     user = db.get(User, found.user_id)
+    has_existing = bool(user.public_key or user.encrypted_private_key)
+    if has_existing:
+        now = int(time.time())
+        if found.expires - now < 3300:
+            raise HTTPException(403, 'Key replacement requires a fresh login. Please sign in again.')
+        # If public key is unchanged and only encrypted_private_key is updated (re-wrapping with higher iterations)
+        if user.public_key == data.public_key and user.public_key != '':
+            user.encrypted_private_key = data.encrypted_private_key
+            db.commit()
+            return {'ok': True}
+        if not data.code:
+            raise HTTPException(409, 'Existing keypair cannot be overwritten without re-authenticating with your authenticator code.')
+        check_code(db, user, data.code, allow_current=True)
+        logger.warning(f'User {user.id} ({user.email}) replaced their E2EE keypair after TOTP verification.')
     user.public_key = data.public_key
     user.encrypted_private_key = data.encrypted_private_key
     db.commit()
@@ -405,9 +464,11 @@ def registered_users(after: int = Query(default=0, ge=0), authorization: str = H
 @app.post('/auth/messages', dependencies=private, status_code=201)
 def send_message(data: NewMessage, authorization: str = Header(default=''), db: Session = Depends(db_session)):
     found = ticket(db, authorization, 'session')
+    if not data.body.startswith('E2EE:') or (data.sender_body and not data.sender_body.startswith('E2EE:')):
+        raise HTTPException(400, 'Only end-to-end encrypted messages are permitted (E2EE: prefix required).')
     limit('messages:' + str(found.user_id), 20, 300)
     recipient_email = str(data.recipient).lower()
-    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '').strip().lower()
+    required_domain = os.getenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk').strip().lower()
     if required_domain and not recipient_email.endswith(required_domain):
         raise HTTPException(400, f'Messages can only be sent to verified {required_domain} addresses.')
     recipient = db.scalar(select(User).where(User.email == recipient_email, User.enabled == True))

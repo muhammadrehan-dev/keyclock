@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 
 from cryptography.fernet import Fernet
@@ -5,7 +7,8 @@ from cryptography.fernet import Fernet
 os.environ['INTERNAL_API_KEY'] = 'test-api-key-' + 'x' * 32
 os.environ['TOTP_ENCRYPTION_KEY'] = Fernet.generate_key().decode()
 os.environ['DATABASE_URL'] = 'sqlite://'
-os.environ['REQUIRED_EMAIL_DOMAIN'] = ''
+os.environ['REQUIRED_EMAIL_DOMAIN'] = '@students.duet.edu.pk'
+os.environ['FIREBASE_PROJECT_ID'] = 'duet-e2e-chat'
 
 import pyotp
 import pytest
@@ -17,34 +20,59 @@ from sqlalchemy.pool import StaticPool
 import app as auth
 
 
+def make_token(email='alice@students.duet.edu.pk', email_verified=True, aud='duet-e2e-chat', expired=False):
+    payload = {
+        'email': email,
+        'email_verified': email_verified,
+        'aud': aud,
+        'exp': int(auth.time.time()) - 10 if expired else int(auth.time.time()) + 3600,
+        'name': email.split('@')[0].capitalize(),
+    }
+    return 'mock.' + base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
+
+
+def mock_verify_firebase_token(id_token, request, audience=None, clock_skew_in_seconds=0):
+    if not isinstance(id_token, str) or not id_token.startswith('mock.'):
+        raise ValueError('Invalid token format')
+    try:
+        raw = base64.urlsafe_b64decode(id_token.split('.', 1)[1].encode())
+        claims = json.loads(raw.decode())
+    except Exception as e:
+        raise ValueError(f'Malformed token: {e}')
+    if claims.get('exp', 0) <= auth.time.time():
+        raise ValueError('Token is expired')
+    if audience and claims.get('aud') != audience:
+        raise ValueError(f'Token has wrong audience: expected {audience}, got {claims.get("aud")}')
+    return claims
+
+
 @pytest.fixture
 def client(monkeypatch):
     engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
     monkeypatch.setattr(auth, 'engine', engine)
     monkeypatch.setattr(auth.time, 'time', lambda: 1_800_000_000)
+    monkeypatch.setattr(auth.google_id_token, 'verify_firebase_token', mock_verify_firebase_token)
     with TestClient(auth.app, headers={'X-Internal-Key': auth.API_KEY}) as client:
         yield client
     engine.dispose()
-
-
-credentials = {'email': 'alice@example.com', 'password': 'a very long test password'}
 
 
 def headers(token):
     return {'Authorization': 'Bearer ' + token}
 
 
-def signup(client):
-    response = client.post('/auth/signup', json={**credentials, 'name': '  Alice Example  '})
+def signup(client, email='alice@students.duet.edu.pk', name='  Alice Example  '):
+    token = make_token(email=email)
+    response = client.post('/auth/signup', json={'id_token': token, 'name': name})
     assert response.status_code == 201
-    token = response.json()['token']
-    setup = client.get('/auth/enroll', headers=headers(token)).json()
+    enroll_token = response.json()['token']
+    setup = client.get('/auth/enroll', headers=headers(enroll_token)).json()
     assert setup['qr'].startswith('data:image/png;base64,')
-    return token, setup['secret']
+    return enroll_token, setup['secret']
 
 
-def activate(client):
-    token, secret = signup(client)
+def activate(client, email='alice@students.duet.edu.pk', name='  Alice Example  '):
+    token, secret = signup(client, email=email, name=name)
     response = client.post('/auth/enroll/confirm', headers=headers(token), json={'code': pyotp.TOTP(secret).at(auth.time.time())})
     assert response.status_code == 200, response.text
     return secret, response.json()
@@ -55,7 +83,7 @@ def test_full_login_replay_and_logout(client, monkeypatch):
     assert len(enrolled['recovery_codes']) == 8
     assert client.get('/auth/me', headers=headers(enrolled['token'])).json()['totp_enabled']
     assert client.get('/auth/me', headers=headers(enrolled['token'])).json()['name'] == 'Alice Example'
-    challenge = client.post('/auth/login', json=credentials).json()
+    challenge = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}).json()
     assert challenge['step'] == 'mfa'
     assert client.get('/auth/me', headers=headers(challenge['token'])).status_code == 401
     assert client.post('/auth/verify', headers=headers(challenge['token']), json={'code': pyotp.TOTP(secret).at(auth.time.time())}).status_code == 401
@@ -69,13 +97,13 @@ def test_full_login_replay_and_logout(client, monkeypatch):
     assert client.get('/auth/me', headers=headers(session)).status_code == 401
 
 
-def test_recovery_is_one_use_and_requires_password_challenge(client):
+def test_recovery_is_one_use_and_requires_challenge(client):
     _, enrolled = activate(client)
     recovery = {'code': enrolled['recovery_codes'][0], 'recovery': True}
     assert client.post('/auth/verify', json=recovery).status_code == 401
-    challenge = client.post('/auth/login', json=credentials).json()['token']
+    challenge = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}).json()['token']
     assert client.post('/auth/verify', headers=headers(challenge), json=recovery).status_code == 200
-    challenge = client.post('/auth/login', json=credentials).json()['token']
+    challenge = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}).json()['token']
     assert client.post('/auth/verify', headers=headers(challenge), json=recovery).status_code == 401
 
 
@@ -86,7 +114,6 @@ def test_enrollment_scope_and_storage(client):
         user = db.scalar(select(auth.User))
         assert secret not in user.secret
         assert user.name == 'Alice Example'
-        assert user.password != credentials['password']
         assert auth.cipher.decrypt(user.secret.encode()).decode() == secret
         assert db.get(auth.Ticket, auth.digest(token)) is not None
         assert db.get(auth.Ticket, token) is None
@@ -96,7 +123,7 @@ def test_expired_enrollment_and_resume(client, monkeypatch):
     token, _ = signup(client)
     monkeypatch.setattr(auth.time, 'time', lambda: 1_800_000_601)
     assert client.get('/auth/enroll', headers=headers(token)).status_code == 401
-    response = client.post('/auth/login', json=credentials)
+    response = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')})
     assert response.json()['step'] == 'enroll'
     assert client.get('/auth/enroll', headers=headers(response.json()['token'])).status_code == 200
 
@@ -111,23 +138,23 @@ def test_otp_attempt_limit(client):
     assert 'retry-after' in response.headers
 
 
-def test_password_limit_and_validation(client):
+def test_login_limit_and_validation(client):
     signup(client)
     for _ in range(10):
-        assert client.post('/auth/login', json={**credentials, 'password': 'incorrect password'}).status_code == 401
-    assert client.post('/auth/login', json=credentials).status_code == 429
-    assert client.post('/auth/signup', json={'email': 'not-email', 'password': 'short'}).status_code == 422
+        assert client.post('/auth/login', json={'id_token': make_token('unknown@students.duet.edu.pk')}).status_code == 401
+    assert client.post('/auth/login', json={'id_token': make_token('unknown@students.duet.edu.pk')}).status_code == 429
+    assert client.post('/auth/signup', json={'name': 'No Token'}).status_code == 422
 
 
 def test_enrollment_cannot_be_reopened(client):
     secret, enrolled = activate(client)
     assert client.get('/auth/enroll', headers=headers(enrolled['token'])).status_code == 401
-    challenge = client.post('/auth/login', json=credentials).json()['token']
+    challenge = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}).json()['token']
     assert client.get('/auth/enroll', headers=headers(challenge)).status_code == 401
 
 
 def test_server_key_required_and_no_cache(client):
-    response = client.post('/auth/login', json=credentials, headers={'X-Internal-Key': 'wrong'})
+    response = client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}, headers={'X-Internal-Key': 'wrong'})
     assert response.status_code == 403
     assert response.headers['cache-control'] == 'no-store'
     assert client.get('/health', headers={'X-Internal-Key': ''}).status_code == 200
@@ -135,7 +162,6 @@ def test_server_key_required_and_no_cache(client):
 
 def test_leading_zero_code_and_expired_code(client, monkeypatch):
     token, secret = signup(client)
-    # A known RFC secret gives deterministic leading-zero behavior.
     secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
     with Session(auth.engine) as db:
         user = db.scalar(select(auth.User))
@@ -150,25 +176,27 @@ def test_leading_zero_code_and_expired_code(client, monkeypatch):
 
 @pytest.mark.parametrize('name', [None, '', '   ', 'x' * 101])
 def test_registration_requires_valid_name(client, name):
-    data = {**credentials}
+    data = {'id_token': make_token('alice@students.duet.edu.pk')}
     if name is not None:
         data['name'] = name
-    assert client.post('/auth/signup', json=data).status_code == 422
-    with Session(auth.engine) as db:
-        assert db.scalar(select(auth.User)) is None
+    if name == 'x' * 101:
+        assert client.post('/auth/signup', json=data).status_code == 422
+    else:
+        # Empty name falls back to token display name or default
+        res = client.post('/auth/signup', json=data)
+        assert res.status_code == 201
 
 
-@pytest.mark.parametrize('email', ['alice@example.com', 'ALICE@EXAMPLE.COM'])
-def test_duplicate_registration_keeps_original_account(client, email):
-    signup(client)
-    response = client.post('/auth/signup', json={**credentials, 'email': email, 'name': 'Someone Else'})
+def test_duplicate_registration_keeps_original_account(client):
+    signup(client, email='alice@students.duet.edu.pk')
+    response = client.post('/auth/signup', json={'id_token': make_token('alice@students.duet.edu.pk'), 'name': 'Someone Else'})
     assert response.status_code == 409
     assert response.json()['detail'] == 'This email is already in use. Please sign in instead.'
     with Session(auth.engine) as db:
         users = db.scalars(select(auth.User)).all()
         assert len(users) == 1
         assert users[0].name == 'Alice Example'
-    assert client.post('/auth/login', json=credentials).status_code == 200
+    assert client.post('/auth/login', json={'id_token': make_token('alice@students.duet.edu.pk')}).status_code == 200
 
 
 def test_existing_database_name_migration(monkeypatch):
@@ -177,13 +205,13 @@ def test_existing_database_name_migration(monkeypatch):
     monkeypatch.setattr(auth, 'engine', engine)
     with engine.begin() as connection:
         connection.execute(text('CREATE TABLE users (id INTEGER PRIMARY KEY, email VARCHAR(254) UNIQUE, password VARCHAR(512), secret VARCHAR(512), enabled BOOLEAN, last_counter INTEGER)'))
-        connection.execute(text("INSERT INTO users VALUES (1, 'legacy@example.com', 'old-hash', 'old-secret', 1, 42)"))
+        connection.execute(text("INSERT INTO users VALUES (1, 'legacy@students.duet.edu.pk', 'old-hash', 'old-secret', 1, 42)"))
     auth.initialize_database()
     auth.initialize_database()
     with Session(engine) as db:
         user = db.get(auth.User, 1)
         assert user.name == ''
-        assert (user.email, user.password, user.secret, user.enabled, user.last_counter) == ('legacy@example.com', 'old-hash', 'old-secret', True, 42)
+        assert (user.email, user.secret, user.enabled, user.last_counter) == ('legacy@students.duet.edu.pk', 'old-secret', True, 42)
     engine.dispose()
 
 
@@ -191,7 +219,7 @@ def message_accounts():
     tokens = {}
     with Session(auth.engine) as db:
         for name in ['Alice', 'Bob', 'Carol']:
-            user = auth.User(name=name, email=name.lower() + '@example.com', password='test-only', secret='test-only', enabled=True)
+            user = auth.User(name=name, email=name.lower() + '@students.duet.edu.pk', secret='test-only', enabled=True)
             db.add(user)
             db.flush()
             tokens[name] = auth.issue(db, user, 'session', 3600)
@@ -201,25 +229,25 @@ def message_accounts():
 
 def test_message_delivery_and_account_isolation(client):
     tokens = message_accounts()
-    response = client.post('/auth/messages', headers=headers(tokens['Alice']), json={'recipient': 'BOB@EXAMPLE.COM', 'body': '  Hello Bob!\nHow are you?  ', 'sender_id': 3})
+    response = client.post('/auth/messages', headers=headers(tokens['Alice']), json={'recipient': 'BOB@STUDENTS.DUET.EDU.PK', 'body': '  E2EE:Hello Bob!\nHow are you?  ', 'sender_id': 3})
     assert response.status_code == 201
     alice = client.get('/auth/messages', headers=headers(tokens['Alice'])).json()
     bob = client.get('/auth/messages', headers=headers(tokens['Bob'])).json()
     carol = client.get('/auth/messages', headers=headers(tokens['Carol'])).json()
     assert alice['inbox'] == [] and alice['sent_count'] == 1
     assert bob['sent'] == [] and bob['inbox_count'] == 1
-    assert bob['inbox'][0]['body'] == 'Hello Bob!\nHow are you?'
-    assert bob['inbox'][0]['contact'] == {'name': 'Alice', 'email': 'alice@example.com'}
+    assert bob['inbox'][0]['body'] == 'E2EE:Hello Bob!\nHow are you?'
+    assert bob['inbox'][0]['contact'] == {'name': 'Alice', 'email': 'alice@students.duet.edu.pk'}
     assert carol == {'inbox': [], 'sent': [], 'inbox_count': 0, 'sent_count': 0}
-    assert client.post('/auth/messages', headers=headers(tokens['Bob']), json={'recipient': 'alice@example.com', 'body': 'Doing well!'}).status_code == 201
-    assert client.get('/auth/messages', headers=headers(tokens['Alice'])).json()['inbox'][0]['body'] == 'Doing well!'
+    assert client.post('/auth/messages', headers=headers(tokens['Bob']), json={'recipient': 'alice@students.duet.edu.pk', 'body': 'E2EE:Doing well!'}).status_code == 201
+    assert client.get('/auth/messages', headers=headers(tokens['Alice'])).json()['inbox'][0]['body'] == 'E2EE:Doing well!'
 
 
 def test_messages_require_full_authentication(client, monkeypatch):
     token, _ = signup(client)
     for auth_headers in [{}, headers(token)]:
         assert client.get('/auth/messages', headers=auth_headers).status_code == 401
-        assert client.post('/auth/messages', headers=auth_headers, json={'recipient': 'bob@example.com', 'body': 'hello'}).status_code == 401
+        assert client.post('/auth/messages', headers=auth_headers, json={'recipient': 'bob@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 401
     with Session(auth.engine) as db:
         user = db.scalar(select(auth.User))
         challenge = auth.issue(db, user, 'mfa', 300)
@@ -234,23 +262,28 @@ def test_message_validation_and_send_limit(client):
     tokens = message_accounts()
     sender = headers(tokens['Alice'])
     for body in ['', '  ', 'x' * 8193]:
-        assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@example.com', 'body': body}).status_code == 422
-    assert client.post('/auth/messages', headers=sender, json={'recipient': 'alice@example.com', 'body': 'hello'}).status_code == 400
-    assert client.post('/auth/messages', headers=sender, json={'recipient': 'missing@example.com', 'body': 'hello'}).status_code == 404
+        assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@students.duet.edu.pk', 'body': body}).status_code == 422
+    # Reject plaintext messages missing E2EE: prefix
+    plaintext_res = client.post('/auth/messages', headers=sender, json={'recipient': 'bob@students.duet.edu.pk', 'body': 'hello unencrypted'})
+    assert plaintext_res.status_code == 400
+    assert 'E2EE: prefix required' in plaintext_res.json()['detail']
+
+    assert client.post('/auth/messages', headers=sender, json={'recipient': 'alice@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 400
+    assert client.post('/auth/messages', headers=sender, json={'recipient': 'missing@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 404
     with Session(auth.engine) as db:
-        db.scalar(select(auth.User).where(auth.User.email == 'carol@example.com')).enabled = False
+        db.scalar(select(auth.User).where(auth.User.email == 'carol@students.duet.edu.pk')).enabled = False
         db.commit()
-    assert client.post('/auth/messages', headers=sender, json={'recipient': 'carol@example.com', 'body': 'hello'}).status_code == 404
+    assert client.post('/auth/messages', headers=sender, json={'recipient': 'carol@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 404
     for _ in range(17):
-        assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@example.com', 'body': 'hello'}).status_code == 201
-    assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@example.com', 'body': 'hello'}).status_code == 429
+        assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 201
+    assert client.post('/auth/messages', headers=sender, json={'recipient': 'bob@students.duet.edu.pk', 'body': 'E2EE:hello'}).status_code == 429
 
 
 def test_mailbox_recent_limit_and_counts(client):
     tokens = message_accounts()
     with Session(auth.engine) as db:
-        alice = db.scalar(select(auth.User).where(auth.User.email == 'alice@example.com'))
-        bob = db.scalar(select(auth.User).where(auth.User.email == 'bob@example.com'))
+        alice = db.scalar(select(auth.User).where(auth.User.email == 'alice@students.duet.edu.pk'))
+        bob = db.scalar(select(auth.User).where(auth.User.email == 'bob@students.duet.edu.pk'))
         for i in range(55):
             db.add(auth.Message(sender_id=alice.id, recipient_id=bob.id, body=str(i), created_at=int(auth.time.time())))
         db.commit()
@@ -263,7 +296,7 @@ def test_mailbox_recent_limit_and_counts(client):
 def test_registered_users_directory(client):
     tokens = message_accounts()
     with Session(auth.engine) as db:
-        db.scalar(select(auth.User).where(auth.User.email == 'carol@example.com')).enabled = False
+        db.scalar(select(auth.User).where(auth.User.email == 'carol@students.duet.edu.pk')).enabled = False
         db.commit()
     response = client.get('/auth/users', headers=headers(tokens['Alice']))
     assert response.status_code == 200
@@ -289,7 +322,7 @@ def test_registered_users_pagination(client):
     tokens = message_accounts()
     with Session(auth.engine) as db:
         for i in range(52):
-            db.add(auth.User(name=f'Member {i}', email=f'member{i}@example.com', password='test', secret='test'))
+            db.add(auth.User(name=f'Member {i}', email=f'member{i}@students.duet.edu.pk', secret='test'))
         db.commit()
     first = client.get('/auth/users', headers=headers(tokens['Alice'])).json()
     second = client.get('/auth/users', params={'after': first['next_cursor']}, headers=headers(tokens['Alice'])).json()
@@ -309,7 +342,7 @@ def test_e2ee_keys_and_dual_envelope(client):
     assert not me['has_keys']
     assert client.get('/auth/keys', headers=alice).json() == {'public_key': '', 'encrypted_private_key': ''}
 
-    # Save keys for Alice and Bob
+    # Save keys for Alice and Bob (first write succeeds)
     alice_pub = '{"kty":"RSA","n":"alice-key"}'
     alice_priv = '{"v":1,"ct":"encrypted-alice-private-key"}'
     bob_pub = '{"kty":"RSA","n":"bob-key"}'
@@ -322,16 +355,16 @@ def test_e2ee_keys_and_dual_envelope(client):
     assert client.get('/auth/me', headers=alice).json()['has_keys']
 
     # Alice fetches Bob's public key
-    bob_key_res = client.get('/auth/keys', params={'email': 'bob@example.com'}, headers=alice)
+    bob_key_res = client.get('/auth/keys', params={'email': 'bob@students.duet.edu.pk'}, headers=alice)
     assert bob_key_res.status_code == 200
     assert bob_key_res.json()['public_key'] == bob_pub
 
     # Querying missing user gives 404
-    assert client.get('/auth/keys', params={'email': 'missing@example.com'}, headers=alice).status_code == 404
+    assert client.get('/auth/keys', params={'email': 'missing@students.duet.edu.pk'}, headers=alice).status_code == 404
 
     # Alice sends dual-envelope E2EE message (body for Bob, sender_body for Alice)
     send_res = client.post('/auth/messages', headers=alice, json={
-        'recipient': 'bob@example.com',
+        'recipient': 'bob@students.duet.edu.pk',
         'body': 'E2EE:encrypted-for-bob',
         'sender_body': 'E2EE:encrypted-for-alice',
     })
@@ -346,25 +379,136 @@ def test_e2ee_keys_and_dual_envelope(client):
     assert alice_box['sent'][0]['body'] == 'E2EE:encrypted-for-alice'
 
 
-def test_domain_restriction_and_password_reset(client, monkeypatch):
-    monkeypatch.setenv('REQUIRED_EMAIL_DOMAIN', '@students.duet.edu.pk')
-    
-    # Registration with wrong domain should be rejected
-    res = client.post('/auth/signup', json={'name': 'Bad Domain', 'email': 'hacker@other.com', 'password': 'testpassword123'})
-    assert res.status_code == 400
-    assert 'Only @students.duet.edu.pk' in res.json()['detail']
+# ==============================================================================
+# Security Tests for Firebase Verification, Domain Fencing & Key Overwrite
+# ==============================================================================
 
-    # Registration with DUET domain succeeds
-    res_ok = client.post('/auth/signup', json={'name': 'DUET Student', 'email': 'student@students.duet.edu.pk', 'password': 'testpassword123'})
-    assert res_ok.status_code == 201
+def test_unverified_firebase_token_rejected(client):
+    unverified_token = make_token('student@students.duet.edu.pk', email_verified=False)
+    # Signup rejected
+    res_signup = client.post('/auth/signup', json={'id_token': unverified_token, 'name': 'Unverified'})
+    assert res_signup.status_code == 401
+    assert 'Email address must be verified' in res_signup.json()['detail']
 
-    # Reset password works
-    reset_res = client.post('/auth/reset-password', json={'email': 'student@students.duet.edu.pk', 'password': 'newpassword12345'})
-    assert reset_res.status_code == 200
+    # Login rejected
+    res_login = client.post('/auth/login', json={'id_token': unverified_token})
+    assert res_login.status_code == 401
+    assert 'Email address must be verified' in res_login.json()['detail']
 
-    # Old password fails
-    assert client.post('/auth/login', json={'email': 'student@students.duet.edu.pk', 'password': 'testpassword123'}).status_code == 401
 
-    # New password succeeds
-    assert client.post('/auth/login', json={'email': 'student@students.duet.edu.pk', 'password': 'newpassword12345'}).status_code == 200
+def test_wrong_domain_rejected(client):
+    # Non-DUET email in token claims must be rejected
+    wrong_domain_token = make_token('attacker@gmail.com', email_verified=True)
+    res_signup = client.post('/auth/signup', json={'id_token': wrong_domain_token, 'name': 'Attacker'})
+    assert res_signup.status_code == 400
+    assert 'Only @students.duet.edu.pk' in res_signup.json()['detail']
 
+    res_login = client.post('/auth/login', json={'id_token': wrong_domain_token})
+    assert res_login.status_code == 400
+    assert 'Only @students.duet.edu.pk' in res_login.json()['detail']
+
+
+def test_wrong_audience_rejected(client):
+    wrong_aud_token = make_token('student@students.duet.edu.pk', email_verified=True, aud='malicious-project-id')
+    res_signup = client.post('/auth/signup', json={'id_token': wrong_aud_token, 'name': 'Wrong Aud'})
+    assert res_signup.status_code == 401
+    assert 'Invalid authentication token' in res_signup.json()['detail']
+
+    res_login = client.post('/auth/login', json={'id_token': wrong_aud_token})
+    assert res_login.status_code == 401
+    assert 'Invalid authentication token' in res_login.json()['detail']
+
+
+def test_expired_token_rejected(client):
+    expired_token = make_token('student@students.duet.edu.pk', email_verified=True, expired=True)
+    res_signup = client.post('/auth/signup', json={'id_token': expired_token, 'name': 'Expired'})
+    assert res_signup.status_code == 401
+    assert 'Invalid authentication token' in res_signup.json()['detail']
+
+    res_login = client.post('/auth/login', json={'id_token': expired_token})
+    assert res_login.status_code == 401
+    assert 'Invalid authentication token' in res_login.json()['detail']
+
+
+def test_key_overwrite_attempt_and_rekey(client, monkeypatch):
+    secret, enrolled = activate(client, email='alice@students.duet.edu.pk')
+    alice = headers(enrolled['token'])
+
+    # 1. First key write succeeds
+    pub1 = '{"kty":"RSA","n":"initial-key"}'
+    priv1 = '{"v":1,"ct":"priv-1"}'
+    assert client.post('/auth/keys', headers=alice, json={'public_key': pub1, 'encrypted_private_key': priv1}).status_code == 200
+
+    # 2. Silent overwrite attempt (without TOTP) must be rejected with 409
+    pub2 = '{"kty":"RSA","n":"attacker-key"}'
+    priv2 = '{"v":1,"ct":"priv-2"}'
+    overwrite_res = client.post('/auth/keys', headers=alice, json={'public_key': pub2, 'encrypted_private_key': priv2})
+    assert overwrite_res.status_code == 409
+    assert 'Existing keypair cannot be overwritten' in overwrite_res.json()['detail']
+
+    # Existing keys must still be intact
+    keys = client.get('/auth/keys', headers=alice).json()
+    assert keys['public_key'] == pub1
+
+    # 3. Legitimate replacement with valid TOTP code in next time step succeeds
+    monkeypatch.setattr(auth.time, 'time', lambda: 1_800_000_030)
+    current_otp = pyotp.TOTP(secret).at(auth.time.time())
+    rekey_res = client.post('/auth/keys', headers=alice, json={
+        'public_key': pub2,
+        'encrypted_private_key': priv2,
+        'code': current_otp,
+    })
+    assert rekey_res.status_code == 200
+
+    # Keys are now replaced
+    keys_after = client.get('/auth/keys', headers=alice).json()
+    assert keys_after['public_key'] == pub2
+
+    # 4. Re-wrapping private key with higher iterations (same public key) succeeds without code
+    priv2_rewrapped = '{"v":2,"iter":600000,"ct":"priv-2-rewrapped"}'
+    rewrap_res = client.post('/auth/keys', headers=alice, json={
+        'public_key': pub2,
+        'encrypted_private_key': priv2_rewrapped,
+    })
+    assert rewrap_res.status_code == 200
+    assert client.get('/auth/keys', headers=alice).json()['encrypted_private_key'] == priv2_rewrapped
+
+
+def test_per_ip_rate_limits(client):
+    ip_signup = '198.51.100.1'
+    ip_login = '198.51.100.2'
+    ip_otp = '198.51.100.3'
+
+    # 1. Signup per-IP rate limit (maximum 20)
+    for i in range(20):
+        email = f'user{i}@students.duet.edu.pk'
+        res = client.post('/auth/signup', json={'id_token': make_token(email)}, headers={'X-Forwarded-For': ip_signup})
+        assert res.status_code == 201
+    res_signup_blocked = client.post('/auth/signup', json={'id_token': make_token('user21@students.duet.edu.pk')}, headers={'X-Forwarded-For': ip_signup})
+    assert res_signup_blocked.status_code == 429
+
+    # 2. Login per-IP rate limit (maximum 30)
+    for i in range(30):
+        email = f'unknown{i}@students.duet.edu.pk'
+        res = client.post('/auth/login', json={'id_token': make_token(email)}, headers={'X-Forwarded-For': ip_login})
+        assert res.status_code == 401
+    res_login_blocked = client.post('/auth/login', json={'id_token': make_token('unknown31@students.duet.edu.pk')}, headers={'X-Forwarded-For': ip_login})
+    assert res_login_blocked.status_code == 429
+
+    # 3. OTP per-IP rate limit (maximum 15 across different enrollment tokens from same IP)
+    tokens = []
+    for i in range(4):
+        signup_res = client.post('/auth/signup', json={'id_token': make_token(f'otp_user{i}@students.duet.edu.pk')}, headers={'X-Forwarded-For': '198.51.100.99'})
+        tokens.append(signup_res.json()['token'])
+
+    attempts = 0
+    for tok in tokens[:3]:
+        for _ in range(5):
+            res = client.post('/auth/enroll/confirm', headers={**headers(tok), 'X-Forwarded-For': ip_otp}, json={'code': '999999'})
+            assert res.status_code == 401
+            attempts += 1
+    assert attempts == 15
+
+    # 16th OTP attempt from ip_otp hits the per-IP rate limit (429)
+    res_otp_blocked = client.post('/auth/enroll/confirm', headers={**headers(tokens[3]), 'X-Forwarded-For': ip_otp}, json={'code': '999999'})
+    assert res_otp_blocked.status_code == 429

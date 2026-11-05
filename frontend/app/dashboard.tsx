@@ -66,6 +66,9 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
   const [unlockPassword, setUnlockPassword] = useState('');
   const [unlockError, setUnlockError] = useState('');
   const [unlocking, setUnlocking] = useState(false);
+  const [showRekeyModal, setShowRekeyModal] = useState(false);
+  const [rekeyTotp, setRekeyTotp] = useState('');
+  const [rekeyBusy, setRekeyBusy] = useState(false);
   const composer = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -114,21 +117,46 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
 
       let privKey: CryptoKey;
       if (keysData.encrypted_private_key && keysData.public_key) {
-        privKey = await decryptPrivateKeyWithPassword(keysData.encrypted_private_key, passwordToUse);
+        try {
+          const res = await decryptPrivateKeyWithPassword(keysData.encrypted_private_key, passwordToUse);
+          privKey = res.privateKey;
+          await savePrivateKeyToSession(res.jwk);
+          if (res.needsRewrap) {
+            try {
+              const rewrapped = await encryptPrivateKeyWithPassword(res.jwk, passwordToUse, 600000);
+              await fetch('/api/auth/keys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ public_key: keysData.public_key, encrypted_private_key: rewrapped }),
+              });
+            } catch {
+              // Non-blocking rewrap
+            }
+          }
+        } catch {
+          throw new Error('Could not decrypt your private key. If you recently reset your password, your old key cannot be unlocked with the new password.');
+        }
       } else {
         const keyPair = await generateE2EEKeyPair();
         const pubJwk = await exportPublicKey(keyPair.publicKey);
-        const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, passwordToUse);
+        const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, passwordToUse, 600000);
         const saveRes = await fetch('/api/auth/keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ public_key: pubJwk, encrypted_private_key: encPriv }),
         });
         if (!saveRes.ok) throw new Error('Could not initialize your encryption keys.');
-        privKey = keyPair.privateKey;
+        const privJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+        privKey = await crypto.subtle.importKey(
+          'jwk',
+          privJwk,
+          { name: 'RSA-OAEP', hash: 'SHA-256' },
+          false,
+          ['decrypt']
+        );
+        await savePrivateKeyToSession(privJwk);
       }
 
-      await savePrivateKeyToSession(privKey);
       setUserPrivateKey(privKey);
       setUnlockPassword('');
       if (rawMailbox) {
@@ -138,6 +166,42 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
       setUnlockError(err instanceof Error ? err.message : 'Incorrect password or failed to unlock keys.');
     } finally {
       setUnlocking(false);
+    }
+  }
+
+  async function handleRekey() {
+    if (!rekeyTotp || !unlockPassword) return;
+    setRekeyBusy(true);
+    setUnlockError('');
+    try {
+      const keyPair = await generateE2EEKeyPair();
+      const pubJwk = await exportPublicKey(keyPair.publicKey);
+      const encPriv = await encryptPrivateKeyWithPassword(keyPair.privateKey, unlockPassword, 600000);
+      const res = await fetch('/api/auth/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_key: pubJwk, encrypted_private_key: encPriv, code: rekeyTotp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Could not replace keypair.');
+      const privJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+      const privKey = await crypto.subtle.importKey(
+        'jwk',
+        privJwk,
+        { name: 'RSA-OAEP', hash: 'SHA-256' },
+        false,
+        ['decrypt']
+      );
+      await savePrivateKeyToSession(privJwk);
+      setUserPrivateKey(privKey);
+      setUnlockPassword('');
+      setShowRekeyModal(false);
+      setRekeyTotp('');
+      if (rawMailbox) setMailbox(await decryptMailbox(rawMailbox, privKey));
+    } catch (err) {
+      setUnlockError(err instanceof Error ? err.message : 'Failed to replace keypair.');
+    } finally {
+      setRekeyBusy(false);
     }
   }
 
@@ -264,7 +328,59 @@ export default function Dashboard({ name, email, onLogout, busy, error }: Props)
                   {unlocking ? 'Unlocking…' : 'Unlock Messages'}
                 </button>
               </form>
-              {unlockError && <p className="error" style={{ margin: '8px 0 0' }} role="alert">{unlockError}</p>}
+              {unlockError && (
+                <div style={{ marginTop: 8 }}>
+                  <p className="error" style={{ margin: 0 }} role="alert">{unlockError}</p>
+                  {unlockError.includes('reset your password') && (
+                    !showRekeyModal ? (
+                      <button
+                        type="button"
+                        className="text-button"
+                        style={{ color: '#be2e15', marginTop: 8, fontSize: 13 }}
+                        onClick={() => setShowRekeyModal(true)}
+                      >
+                        Reset encryption keypair (re-key with authenticator) →
+                      </button>
+                    ) : (
+                      <div style={{ marginTop: 10, padding: 12, background: '#fff0e9', borderRadius: 8, border: '1px solid #ffd4c2' }}>
+                        <p style={{ margin: '0 0 8px', fontSize: 12, color: '#be2e15', lineHeight: 1.4 }}>
+                          <strong>Warning:</strong> Creating a new keypair lets you send and receive new messages, but previously received encrypted messages can no longer be decrypted.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="6-digit Authenticator code"
+                            maxLength={6}
+                            value={rekeyTotp}
+                            onChange={e => setRekeyTotp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            style={{ width: 190, padding: '6px 10px', fontSize: 13, border: '1px solid var(--border)', borderRadius: 6 }}
+                            disabled={rekeyBusy}
+                          />
+                          <button
+                            type="button"
+                            className="outline-button"
+                            style={{ borderColor: '#be2e15', color: '#be2e15' }}
+                            disabled={rekeyBusy || rekeyTotp.length !== 6 || !unlockPassword}
+                            onClick={handleRekey}
+                          >
+                            {rekeyBusy ? 'Replacing…' : 'Generate New Keypair'}
+                          </button>
+                          <button
+                            type="button"
+                            className="text-button"
+                            style={{ margin: 0, fontSize: 12 }}
+                            disabled={rekeyBusy}
+                            onClick={() => setShowRekeyModal(false)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
           </section>
         )}

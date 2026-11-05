@@ -18,3 +18,7 @@ services:
         sync: false
       - key: TOTP_ISSUER
         value: DUETCLOCK
+      - key: REQUIRED_EMAIL_DOMAIN
+        value: "@students.duet.edu.pk"
+      - key: FIREBASE_PROJECT_ID
+        value: duet-e2e-chat

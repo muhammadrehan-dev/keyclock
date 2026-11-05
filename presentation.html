@@ -1078,11 +1078,11 @@
 
         <span class="eyebrow">DAWOOD UNIVERSITY OF ENGINEERING &amp; TECHNOLOGY · DEPT OF COMPUTER SYSTEMS / INFOSEC</span>
 
-        <h1>Demystifying the <em>CIA Triad</em><br>In Zero-Knowledge Messaging</h1>
+        <h1>Demystifying the <em>CIA Triad</em><br>In Client-Side Encrypted Messaging</h1>
 
         <p class="lead" style="font-size: 17px; max-width: 820px;">
 
-          An institutional-grade, zero-knowledge client-side encryption messaging system built with W3C WebCrypto API, TOTP 2FA, and Supabase server-blind PostgreSQL storage.
+          An institutional-grade client-side encryption messaging system built with W3C WebCrypto API, TOTP 2FA, and database-compromise defense.
 
         </p>
 
@@ -1294,7 +1294,7 @@
 
           <div class="col-left">
 
-            <span class="eyebrow">ZERO-KNOWLEDGE ARCHITECTURE</span>
+            <span class="eyebrow">DATABASE-BLIND ARCHITECTURE</span>
 
             <h2>Client-Side Cryptographic Vault</h2>
 
@@ -1336,11 +1336,11 @@
 
                 </svg>
 
-                Zero-Knowledge Key Custody
+                Client-Wrapped Key Custody
 
               </h3>
 
-              <p>Private keys are encrypted client-side with <code>PBKDF2</code> (100,000 SHA-256 rounds + 16-byte salt) before upload. Neither Render nor Supabase can decrypt keys.</p>
+              <p>Private keys are encrypted client-side with <code>PBKDF2</code> (600,000 SHA-256 rounds + 16-byte salt) before upload. Protects confidentiality against a database-only compromise.</p>
 
             </div>
 
@@ -1580,11 +1580,11 @@
 
                 </svg>
 
-                Atomic Sliding Throttles
+                Atomic Fixed-Window Throttles
 
               </h3>
 
-              <p>Database-backed rate limiters enforce 5-attempt OTP lockouts and atomic IP/account request limits to neutralize brute-force attacks.</p>
+              <p>Database-backed rate limiters enforce 5-attempt OTP lockouts alongside per-IP and per-account limits, tuned to mitigate brute-force and lockout abuse.</p>
 
             </div>
 
@@ -1820,7 +1820,7 @@
 
               <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Default E2EE</span><br><small>Signal Protocol</small></td>
 
-              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>100% Mandatory E2EE</span><br><small>Plaintext physically never leaves RAM</small></td>
+              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Mandatory E2EE Envelope</span><br><small>Server strictly rejects plaintext (requires E2EE: prefix)</small></td>
 
             </tr>
 
@@ -1830,7 +1830,7 @@
 
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Proprietary &ldquo;MTProto&rdquo;</span><br><small>Custom non-standard MAC</small></td>
 
-              <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Signal Protocol</span><br><small>Noise Double Ratchet</small></td>
+              <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Signal Protocol</span><br><small>Double Ratchet (Signal)</small></td>
 
               <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>W3C &amp; NIST Standards</span><br><small>RSA-OAEP, AES-256-GCM, PBKDF2</small></td>
 
@@ -1844,7 +1844,7 @@
 
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Closed Trust Model</span><br><small>Meta manages closed key distribution</small></td>
 
-              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>True Zero-Knowledge</span><br><small>Database only holds encrypted ciphertext</small></td>
+              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Database-Blind Storage</span><br><small>Protects against DB leak; not a malicious server</small></td>
 
             </tr>
 
@@ -1856,7 +1856,7 @@
 
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Commercial Metadata Mining</span><br><small>Social graphs, timing, telemetry</small></td>
 
-              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Zero Metadata Harvesting</span><br><small>Isolated educational boundary</small></td>
+              <td class="comp-highlight"><span class="badge-star"><svg width="12" height="12" viewBox="0 0 24 24" fill="#165c34" stroke="currentColor" stroke-width="1" style="margin-right:4px; vertical-align:-1px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>No Commercial Profiling</span><br><small>Server sees recipient &amp; timestamp; no ad mining</small></td>
 
             </tr>
 
@@ -1875,6 +1875,10 @@
           </tbody>
 
         </table>
+
+        <div style="margin-top: 14px; padding: 10px 14px; background: #fffefa; border: 1px solid var(--line); border-radius: 6px; font-size: 11.5px; color: var(--muted); line-height: 1.45;">
+          <strong style="color: var(--ink);">Honest Security Model:</strong> Protects confidentiality against a <strong>database-only leak</strong> (an attacker or rogue DB admin who dumps Supabase sees only encrypted ciphertext). It does <em>not</em> claim protection against a malicious server, which sees routing metadata (who messages whom and when) and could observe login passwords to derive key-wrapping keys.
+        </div>
 
       </div>
 

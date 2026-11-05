@@ -3,18 +3,23 @@ import subprocess
 import time
 
 html_path = os.path.abspath("presentation.html")
-# We will output to both the original filename and a clean filename
-pdf_names = [
-    "DUETCLOCK · Information Security Presentation Deck.pdf",
-    "DUETCLOCK - Information Security Presentation Deck.pdf"
-]
+pdf_output = os.path.abspath("DUETCLOCK - Information Security Presentation Deck.pdf")
+
+# Remove duplicate PDF if present
+duplicate_pdf = os.path.abspath("DUETCLOCK · Information Security Presentation Deck.pdf")
+if os.path.exists(duplicate_pdf):
+    try:
+        os.remove(duplicate_pdf)
+        print(f"Removed duplicate PDF: '{duplicate_pdf}'")
+    except Exception as e:
+        print(f"Note: Could not remove duplicate PDF: {e}")
 
 chrome_candidates = [
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
     os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
-    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 ]
 
 browser_exe = None
@@ -29,14 +34,14 @@ if not browser_exe:
 print(f"Using browser: {browser_exe}")
 print(f"Source HTML: {html_path}")
 
-primary_output = os.path.abspath(pdf_names[0])
-
 cmd = [
     browser_exe,
     "--headless=new",
     "--disable-gpu",
     "--no-pdf-header-footer",
-    f"--print-to-pdf={primary_output}",
+    "--virtual-time-budget=8000",
+    "--run-all-compositor-stages-before-draw",
+    f"--print-to-pdf={pdf_output}",
     f"file:///{html_path.replace(os.sep, '/')}"
 ]
 
@@ -44,15 +49,9 @@ print("Running command:", " ".join(cmd))
 res = subprocess.run(cmd, capture_output=True, text=True)
 time.sleep(1)
 
-if os.path.exists(primary_output):
-    size = os.path.getsize(primary_output)
-    print(f"SUCCESS: Generated '{pdf_names[0]}' ({size:,} bytes)")
-    
-    # Also write clean ASCII filename for compatibility
-    import shutil
-    clean_output = os.path.abspath(pdf_names[1])
-    shutil.copy2(primary_output, clean_output)
-    print(f"SUCCESS: Copied to '{pdf_names[1]}'")
+if os.path.exists(pdf_output):
+    size = os.path.getsize(pdf_output)
+    print(f"SUCCESS: Generated '{pdf_output}' ({size:,} bytes)")
 else:
     print(f"ERROR: PDF was not created. Stdout: {res.stdout}, Stderr: {res.stderr}")
 
