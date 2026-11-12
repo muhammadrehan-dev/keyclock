@@ -960,6 +960,308 @@
 
 
 
+    /* Deep-Dive Cryptographic Layouts */
+
+    .crypto-grid-2 {
+
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 20px;
+
+      align-items: stretch;
+
+      height: 100%;
+
+    }
+
+
+
+    .crypto-grid-3 {
+
+      display: grid;
+
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 16px;
+
+      align-items: stretch;
+
+      height: 100%;
+
+    }
+
+
+
+    .crypto-card {
+
+      background: var(--card-bg);
+
+      border: 1px solid var(--line);
+
+      border-radius: 10px;
+
+      padding: 16px 20px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      justify-content: space-between;
+
+    }
+
+
+
+    .crypto-card h3 {
+
+      font-size: 14px;
+
+      font-weight: 700;
+
+      color: var(--ink);
+
+      margin-bottom: 6px;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+    }
+
+
+
+    .crypto-card p {
+
+      font-size: 11.5px;
+
+      color: var(--muted);
+
+      line-height: 1.5;
+
+    }
+
+
+
+    .formula-box {
+
+      background: #0a1610;
+
+      color: #68e29a;
+
+      font-family: 'JetBrains Mono', monospace;
+
+      font-size: 10px;
+
+      padding: 8px 12px;
+
+      border-radius: 6px;
+
+      line-height: 1.5;
+
+      margin: 8px 0;
+
+      border-left: 3px solid #2da664;
+
+    }
+
+
+
+    .spec-table {
+
+      width: 100%;
+
+      border-collapse: collapse;
+
+      font-size: 10px;
+
+      background: var(--card-bg);
+
+      border-radius: 8px;
+
+      overflow: hidden;
+
+      border: 1px solid var(--line);
+
+    }
+
+
+
+    .spec-table th {
+
+      background: #eff3ea;
+
+      padding: 8px 10px;
+
+      text-align: left;
+
+      font-weight: 700;
+
+      color: var(--ink);
+
+      border-bottom: 1px solid var(--line);
+
+    }
+
+
+
+    .spec-table td {
+
+      padding: 7px 10px;
+
+      border-bottom: 1px solid #edf0ea;
+
+      vertical-align: top;
+
+      line-height: 1.35;
+
+    }
+
+
+
+    .spec-table tr:last-child td {
+
+      border-bottom: none;
+
+    }
+
+
+
+    /* Real-World Cryptographic Analogy Callouts & Cliparts */
+
+    .analogy-box {
+
+      background: #fdfaf2;
+
+      border: 1px solid #ebd9b5;
+
+      border-left: 3.5px solid #c28814;
+
+      border-radius: 8px;
+
+      padding: 8px 12px;
+
+      margin-top: 8px;
+
+      display: flex;
+
+      gap: 12px;
+
+      align-items: center;
+
+    }
+
+
+
+    .analogy-icon {
+
+      width: 44px;
+
+      height: 44px;
+
+      flex-shrink: 0;
+
+      background: #fff8eb;
+
+      border: 1px solid #ebd9b5;
+
+      border-radius: 8px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      box-shadow: 0 2px 6px rgba(184, 134, 11, 0.08);
+
+    }
+
+
+
+    .analogy-content {
+
+      flex: 1;
+
+      min-width: 0;
+
+    }
+
+
+
+    .analogy-tag {
+
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      font-size: 8.5px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.6px;
+
+      text-transform: uppercase;
+
+      color: #945d00;
+
+      margin-bottom: 2px;
+
+    }
+
+
+
+    .analogy-title {
+
+      font-size: 11px;
+
+      font-weight: 700;
+
+      color: #1e2d24;
+
+      margin-bottom: 2px;
+
+    }
+
+
+
+    .analogy-text {
+
+      font-size: 10px;
+
+      line-height: 1.4;
+
+      color: #4a544d;
+
+    }
+
+
+
+    .analogy-text strong {
+
+      color: #1e2d24;
+
+    }
+
+
+
+    .analogy-text em {
+
+      color: #165c34;
+
+      font-style: normal;
+
+      font-weight: 600;
+
+    }
+
+
+
     /* Floating UI Navigation for Web Browser Mode */
 
     .nav-controls {
@@ -1038,7 +1340,7 @@
 
   <aside class="nav-controls" aria-label="Deck controls">
 
-    <span>DUETCLOCK Slides (1–8)</span>
+    <span>DUETCLOCK Slides (1–12)</span>
 
     <button class="nav-btn" onclick="scrollToSlide(-1)">↑ Prev</button>
 
@@ -1130,7 +1432,7 @@
 
         <span>Dawood University of Engineering &amp; Technology · Information Security</span>
 
-        <span>Slide 01 / 08</span>
+        <span>Slide 01 / 12</span>
 
       </footer>
 
@@ -1266,7 +1568,7 @@
 
         <span>Confidentiality, Integrity, Availability Defense Deck</span>
 
-        <span>Slide 02 / 08</span>
+        <span>Slide 02 / 12</span>
 
       </footer>
 
@@ -1378,7 +1680,7 @@
 
         <span>Web Crypto API · NIST Standard Algorithms</span>
 
-        <span>Slide 03 / 08</span>
+        <span>Slide 03 / 12</span>
 
       </footer>
 
@@ -1386,9 +1688,308 @@
 
 
 
-    <!-- ==================== SLIDE 4: PILLAR 2 - INTEGRITY & AEAD ==================== -->
+    <!-- ==================== SLIDE 4: DEEP DIVE - DUAL-ENVELOPE E2EE ==================== -->
 
     <section class="slide" id="slide-4">
+
+      <header class="slide-header">
+
+        <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
+        <span class="slide-badge">Cryptographic Pipeline · E2EE</span>
+
+      </header>
+
+      <div class="slide-content">
+
+        <span class="eyebrow">HYBRID ASYMMETRIC / SYMMETRIC ENCRYPTION</span>
+
+        <h2 style="margin-bottom: 14px;">Dual-Envelope E2EE &amp; Key Encapsulation</h2>
+
+        <div class="crypto-grid-2">
+
+          <div class="crypto-card">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Ephemeral AES-256-GCM &amp; 96-Bit Nonce</h3>
+
+              <p>For every message, browser RAM generates a 256-bit symmetric key (<code>K_msg</code>) and 96-bit random IV (<code>N</code>). Plaintext never touches the network.</p>
+
+              <div class="formula-box">
+// 1. Generate ephemeral key &amp; 96-bit random nonce
+K_msg = crypto.subtle.generateKey({name:'AES-GCM', length:256})
+IV = crypto.getRandomValues(new Uint8Array(12)) // 96-bit IV
+C_body || Tag = AES-GCM_{K_msg}(Plaintext, IV)
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box">
+                <div class="analogy-icon">
+                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                    <rect x="6" y="14" width="36" height="24" rx="3" fill="#ffffff" stroke="#c28814" stroke-width="2"/>
+                    <path d="M6 16l18 13 18-13" stroke="#c28814" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="24" cy="28" r="6" fill="#b91c1c" stroke="#7f1d1d" stroke-width="1.5"/>
+                    <circle cx="24" cy="28" r="4" fill="#dc2626"/>
+                    <path d="M12 11l1.5 2.5L16 15l-2.5 1.5L12 19l-1.5-2.5L8 15l2.5-1.5z" fill="#f59e0b"/>
+                    <path d="M35 10l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#10b981"/>
+                    <path d="M38 31l1 1.5 1.5 1-1.5 1-1 1.5-1-1.5-1.5-1 1.5-1z" fill="#ec4899"/>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Real-Life Analogy · The Nonce</span>
+                  <div class="analogy-title">Glitter in the Sealing Wax (96-Bit Random IV)</div>
+                  <div class="analogy-text">If you send <em>&ldquo;Good morning&rdquo;</em> daily with the same key, outside snoops spot repeated parcel sizes and patterns. Mixing random colored glitter into the wax seal makes every single parcel look completely unique and unpredictable to outside couriers.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 8px;"><strong>AEAD Guarantee:</strong> Authenticated encryption with a 128-bit MAC tag. Decryption immediately aborts if even 1 bit is altered in transit or in the database.</p>
+
+            </div>
+
+          </div>
+
+          <div class="crypto-card">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1.5 1.5L14 9l-1.5-1.5L11 9l-1.5-1.5L8 9m-4 4a5 5 0 1 0 7-7 5 5 0 0 0-7 7z"/></svg> Dual-Recipient RSA-OAEP Key Encapsulation</h3>
+
+              <p><code>K_msg</code> is encapsulated simultaneously for both parties using 2048-bit RSA-OAEP with SHA-256 padding and public exponent <code>e = 65537</code>.</p>
+
+              <div class="formula-box">
+// 2. Encapsulate symmetric key for both parties
+K_recipient = RSA-OAEP_{Pub_recipient}(K_msg)
+K_sender    = RSA-OAEP_{Pub_sender}(K_msg)
+Payload = "E2EE:" + JSON({ v:1, iv: IV, key: K_recipient, ct: C_body })
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box">
+                <div class="analogy-icon">
+                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                    <path d="M18 13v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+                    <rect x="6" y="13" width="36" height="25" rx="3" fill="#475569" stroke="#1e293b" stroke-width="2"/>
+                    <line x1="6" y1="25" x2="42" y2="25" stroke="#94a3b8" stroke-width="1.5"/>
+                    <rect x="13" y="27" width="9" height="7" rx="1.5" fill="#d97706" stroke="#92400e" stroke-width="1"/>
+                    <path d="M15 27v-2.5a2.5 2.5 0 0 1 5 0V27" stroke="#b45309" stroke-width="1.5"/>
+                    <text x="17.5" y="32.5" font-size="4.5" font-weight="bold" fill="#fff" text-anchor="middle" font-family="sans-serif">A</text>
+                    <rect x="26" y="27" width="9" height="7" rx="1.5" fill="#d97706" stroke="#92400e" stroke-width="1"/>
+                    <path d="M28 27v-2.5a2.5 2.5 0 0 1 5 0V27" stroke="#b45309" stroke-width="1.5"/>
+                    <text x="30.5" y="32.5" font-size="4.5" font-weight="bold" fill="#fff" text-anchor="middle" font-family="sans-serif">B</text>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Real-Life Analogy · Dual Envelope</span>
+                  <div class="analogy-title">Titanium Case &amp; Two Padlocks</div>
+                  <div class="analogy-text">Alice locks the message in a titanium briefcase with a 1-time combination. She duplicates the combo into two brass boxes&mdash;one locked with Bob&rsquo;s padlock, one with her own. The server moves the case; only Bob or Alice can unlock their box to read it.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 8px;"><strong>Dual-Storage Independence:</strong> Bob decrypts with <code>Priv_recipient</code> in Inbox; Alice decrypts with <code>Priv_sender</code> in Sent. Missing <code>E2EE:</code> prefix is rejected.</p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <footer class="slide-footer">
+
+        <span>Hybrid Envelope Cryptography · W3C SubtleCrypto API · RFC 8017 / NIST SP 800-38D</span>
+
+        <span>Slide 04 / 12</span>
+
+      </footer>
+
+    </section>
+
+
+
+    <!-- ==================== SLIDE 5: DEEP DIVE - KEY CUSTODY & PBKDF2 ==================== -->
+
+    <section class="slide" id="slide-5">
+
+      <header class="slide-header">
+
+        <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
+        <span class="slide-badge">Cryptographic Architecture · Key Custody</span>
+
+      </header>
+
+      <div class="slide-content">
+
+        <span class="eyebrow">PASSWORD-DERIVED ENCRYPTION &amp; MEMORY HYGIENE</span>
+
+        <h2 style="margin-bottom: 6px;">PBKDF2-HMAC-SHA256 &amp; Runtime Isolation</h2>
+
+        <p class="lead" style="font-size: 11.5px; margin-bottom: 10px; line-height: 1.45; max-width: 100%;">
+          <strong>PBKDF2-HMAC-SHA256:</strong> A cryptographic function that transforms human student passwords into uniform 256-bit AES keys by intentionally looping 600,000 times through HMAC-SHA256, making GPU dictionary cracking mathematically unfeasible. <strong>Runtime Isolation:</strong> WebCrypto memory locking (<code>extractable: false</code>) that prevents rogue scripts or browser extensions from exporting raw private keys from RAM.
+        </p>
+
+        <div class="crypto-grid-3">
+
+          <div class="crypto-card" style="padding: 12px 16px;">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> What is PBKDF2? (600k Rounds)</h3>
+
+              <p>Stretches a password into a 256-bit AES wrapping key using 16-byte random salt:</p>
+
+              <div class="formula-box" style="margin: 6px 0; padding: 6px 10px; font-size: 9.5px;">
+K_wrap = PBKDF2(
+  password = StudentPassword,
+  salt = RandomBytes(16),
+  iterations = 600,000,
+  hash = 'SHA-256'
+)
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box" style="margin-top: 6px; padding: 6px 10px;">
+                <div class="analogy-icon" style="width: 38px; height: 38px;">
+                  <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                    <path d="M4 32c0 8 8 12 20 12s20-4 20-12H4z" fill="#b45309" fill-opacity="0.3"/>
+                    <path d="M4 32c4-2 10-3 20-3s16 1 20 3" stroke="#d97706" stroke-width="2"/>
+                    <circle cx="24" cy="22" r="14" stroke="#475569" stroke-width="3" fill="#ffffff"/>
+                    <circle cx="24" cy="22" r="6" fill="#334155"/>
+                    <line x1="24" y1="8" x2="24" y2="36" stroke="#475569" stroke-width="2.5"/>
+                    <line x1="10" y1="22" x2="38" y2="22" stroke="#475569" stroke-width="2.5"/>
+                    <rect x="15" y="19" width="18" height="7" rx="3" fill="#d97706"/>
+                    <text x="24" y="24.5" font-size="4.5" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="sans-serif">600k</text>
+                    <path d="M34 12a15 15 0 0 1 4 10" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M38 18l2 4-4 0" fill="#f59e0b"/>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · High Work Factor</span>
+                  <div class="analogy-title">Vault Wheel in Honey</div>
+                  <div class="analogy-text">Turning the wheel once takes an authorized student 0.2s. But a hacker testing 100M guesses/sec must crank through syrup 600,000 times per guess, turning minutes into decades.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 6px; font-size: 11px;"><strong>OWASP Alignment:</strong> Neutralizes GPU/FPGA rainbow-table and offline dictionary attacks.</p>
+
+            </div>
+
+          </div>
+
+          <div class="crypto-card" style="padding: 12px 16px;">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> What is Salt &amp; Wrapping?</h3>
+
+              <p>The RSA private key JWK is encrypted with AES-256-GCM using <code>K_wrap</code> into a v2 bundle:</p>
+
+              <div class="formula-box" style="margin: 6px 0; padding: 6px 10px; font-size: 9.5px;">
+Bundle = {
+  v: 2, iter: 600000,
+  salt: Base64(salt),
+  iv: Base64(iv),
+  ct: Base64(encryptedJWK)
+}
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box" style="margin-top: 6px; padding: 6px 10px;">
+                <div class="analogy-icon" style="width: 38px; height: 38px;">
+                  <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                    <path d="M8 28c0 9 7 14 16 14s16-5 16-14H8z" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+                    <g transform="rotate(-30 26 14)">
+                      <rect x="22" y="6" width="10" height="15" rx="2" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+                      <rect x="24" y="3" width="6" height="4" rx="1" fill="#0284c7"/>
+                      <circle cx="25.5" cy="5" r="0.6" fill="#ffffff"/>
+                      <circle cx="27" cy="5" r="0.6" fill="#ffffff"/>
+                      <circle cx="28.5" cy="5" r="0.6" fill="#ffffff"/>
+                    </g>
+                    <circle cx="20" cy="22" r="1" fill="#0284c7"/>
+                    <circle cx="24" cy="25" r="1.2" fill="#38bdf8"/>
+                    <circle cx="27" cy="23" r="1" fill="#0284c7"/>
+                    <circle cx="22" cy="28" r="0.8" fill="#38bdf8"/>
+                    <circle cx="26" cy="30" r="1.1" fill="#0ea5e9"/>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Cryptographic Salt</span>
+                  <div class="analogy-title">Secret Spices in Dough</div>
+                  <div class="analogy-text">If two students pick the same password <em>&ldquo;Student@123&rdquo;</em>, 16-byte salt adds unique spices before baking. Alice&rsquo;s and Bob&rsquo;s bundles look totally distinct, neutralizing shared tables.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 6px; font-size: 11px;"><strong>Auto-Migration:</strong> 100k bundles decrypt seamlessly and auto-rewrap to 600k on unlock.</p>
+
+            </div>
+
+          </div>
+
+          <div class="crypto-card" style="padding: 12px 16px;">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> What is Runtime Isolation?</h3>
+
+              <p>Protects private key material in execution context and handles password resets cleanly:</p>
+
+              <div class="formula-box" style="margin: 6px 0; padding: 6px 10px; font-size: 9.5px;">
+// Non-Extractable in WebCrypto RAM
+importKey('jwk', jwk, ..., extractable: false, ['decrypt'])
+
+// Cleared on pagehide &amp; logout
+sessionStorage.removeItem(key)
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box" style="margin-top: 6px; padding: 6px 10px;">
+                <div class="analogy-icon" style="width: 38px; height: 38px;">
+                  <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                    <rect x="6" y="11" width="36" height="26" rx="3.5" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+                    <rect x="6" y="16" width="36" height="4" fill="#059669"/>
+                    <rect x="11" y="24" width="9" height="7.5" rx="1" fill="#eab308" stroke="#ca8a04" stroke-width="0.8"/>
+                    <line x1="14" y1="24" x2="14" y2="31.5" stroke="#a16207" stroke-width="0.7"/>
+                    <line x1="17" y1="24" x2="17" y2="31.5" stroke="#a16207" stroke-width="0.7"/>
+                    <line x1="11" y1="27.5" x2="20" y2="27.5" stroke="#a16207" stroke-width="0.7"/>
+                    <rect x="29" y="24" width="10" height="8" rx="1.5" fill="#15803d" stroke="#166534" stroke-width="1"/>
+                    <path d="M31.5 24v-2.5a2.5 2.5 0 0 1 5 0V24" stroke="#15803d" stroke-width="1.3"/>
+                    <circle cx="34" cy="27.5" r="1" fill="#ffffff"/>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Memory Isolation</span>
+                  <div class="analogy-title">Smart Chip on Bank Card</div>
+                  <div class="analogy-text">An ATM card&rsquo;s gold chip signs transactions internally&mdash;no skimmer can export raw keys. DUETCLOCK locks the key in non-extractable RAM and wipes it immediately on tab close.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 6px; font-size: 11px;"><strong>Post-Reset Handling:</strong> UI alerts that old key cannot decrypt and offers verified re-keying with TOTP.</p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <footer class="slide-footer">
+
+        <span>Key Derivation &amp; Memory Protection · RFC 8018 · W3C SubtleCrypto</span>
+
+        <span>Slide 05 / 12</span>
+
+      </footer>
+
+    </section>
+
+
+
+    <!-- ==================== SLIDE 6: PILLAR 2 - INTEGRITY & AEAD ==================== -->
+
+    <section class="slide" id="slide-6">
 
       <header class="slide-header">
 
@@ -1476,6 +2077,28 @@
 
             </ul>
 
+            <!-- REAL-LIFE ANALOGY CALLOUT -->
+            <div class="analogy-box" style="margin-top: 14px;">
+              <div class="analogy-icon">
+                <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                  <path d="M10 14h28l-2 26H12L10 14z" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+                  <rect x="8" y="10" width="32" height="4" rx="1.5" fill="#64748b"/>
+                  <rect x="11" y="20" width="26" height="8" fill="#dc2626"/>
+                  <path d="M14 22l3 4 3-4" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+                  <circle cx="24" cy="24" r="2.5" fill="#ffffff"/>
+                  <path d="M28 22l2 4 2-4" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M24 32l5 9H19l5-9z" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>
+                  <line x1="24" y1="35" x2="24" y2="38" stroke="#1e293b" stroke-width="1.2" stroke-linecap="round"/>
+                  <circle cx="24" cy="40" r="0.6" fill="#1e293b"/>
+                </svg>
+              </div>
+              <div class="analogy-content">
+                <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Daily Life Analogy · Tamper Proofing</span>
+                <div class="analogy-title">Tamper-Evident Bank Cash Bag</div>
+                <div class="analogy-text">Banks transport cash in serialized bags. If anyone cuts or alters the pouch by 1mm, the seal fractures into <strong>&ldquo;VOID&rdquo;</strong>. AES-256-GCM&rsquo;s 128-bit MAC tag does the same: flipping 1 bit in the DB halts decryption immediately.</div>
+              </div>
+            </div>
+
           </div>
 
 
@@ -1510,7 +2133,7 @@
 
         <span>AEAD Integrity Validation · Monotonic Replay Fencing</span>
 
-        <span>Slide 04 / 08</span>
+        <span>Slide 06 / 12</span>
 
       </footer>
 
@@ -1518,9 +2141,141 @@
 
 
 
-    <!-- ==================== SLIDE 5: PILLAR 3 - AVAILABILITY ==================== -->
+    <!-- ==================== SLIDE 7: DEEP DIVE - TOTP & FERNET ==================== -->
 
-    <section class="slide" id="slide-5">
+    <section class="slide" id="slide-7">
+
+      <header class="slide-header">
+
+        <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
+        <span class="slide-badge">Cryptographic Architecture · MFA &amp; Token Auth</span>
+
+      </header>
+
+      <div class="slide-content">
+
+        <span class="eyebrow">SECOND-FACTOR MATHEMATICS &amp; AT-REST DEFENSE</span>
+
+        <h2 style="margin-bottom: 14px;">RFC 6238 TOTP, Replay Fencing &amp; Fernet Shield</h2>
+
+        <div class="crypto-grid-2">
+
+          <div class="crypto-card">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> RFC 6238 Time-Based OTP Formulation</h3>
+
+              <p>Generates an offline 6-digit one-time code synchronized with user's authenticator app every 30 seconds:</p>
+
+              <div class="formula-box">
+// 1. Time-step counter (X = 30s) &amp; HMAC-SHA1
+T = floor((UnixTime - T_0) / 30)
+Hash = HMAC-SHA1(K_secret, T_8bytes)
+
+// 2. Dynamic Truncation &amp; Modulo Reduction
+Offset = Hash[19] &amp; 0x0F
+BinaryCode = (Hash[Offset..Offset+3] &amp; 0x7FFFFFFF)
+OTP = (BinaryCode mod 1,000,000).padStart(6, '0')
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box">
+                <div class="analogy-icon">
+                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                    <circle cx="16" cy="26" r="10" fill="#fffbeb" stroke="#b45309" stroke-width="1.6"/>
+                    <rect x="14" y="12" width="4" height="4" rx="1" fill="#b45309"/>
+                    <line x1="16" y1="26" x2="16" y2="19" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="16" y1="26" x2="20" y2="23" stroke="#92400e" stroke-width="1.2" stroke-linecap="round"/>
+                    <circle cx="16" cy="26" r="1.5" fill="#d97706"/>
+                    <circle cx="32" cy="26" r="10" fill="#fffbeb" stroke="#b45309" stroke-width="1.6"/>
+                    <rect x="30" y="12" width="4" height="4" rx="1" fill="#b45309"/>
+                    <line x1="32" y1="26" x2="32" y2="19" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="32" y1="26" x2="36" y2="23" stroke="#92400e" stroke-width="1.2" stroke-linecap="round"/>
+                    <circle cx="32" cy="26" r="1.5" fill="#d97706"/>
+                    <rect x="19" y="36" width="10" height="6" rx="2" fill="#15803d"/>
+                    <text x="24" y="40.5" font-size="4" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">30s</text>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Second Factor</span>
+                  <div class="analogy-title">Synchronized Swiss Watches</div>
+                  <div class="analogy-text">Alice and DUETCLOCK hold mechanical watches ticking in lockstep. Every 30s, the gear clicks and reveals the same 6-digit code&mdash;zero cellular/SMS needed. The backend turnstile records the tick so used codes can never be replayed.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 8px;"><strong>Anti-Replay Fencing:</strong> Backend enforces <code>last_counter = T</code>; code window checks &plusmn;1 step (90s tolerance) to gracefully absorb device clock drift.</p>
+
+            </div>
+
+          </div>
+
+          <div class="crypto-card">
+
+            <div>
+
+              <h3><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fernet Secret Shield &amp; RS256 Token Auth</h3>
+
+              <p>Dual-layer protection of credentials across the application lifecycle:</p>
+
+              <div class="formula-box">
+// 1. At-Rest TOTP Secret Encryption (Fernet)
+Ciphertext = AES-128-CBC(Seed, IV, K_enc)
+Tag = HMAC-SHA256(IV || Timestamp || Ciphertext, K_mac)
+StoredSecret = Version || Timestamp || IV || Ciphertext || Tag
+
+// 2. Google RS256 JWT Verification
+verify(id_token, GoogleCerts, aud=PROJECT_ID)
+assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@students.duet.edu.pk')
+              </div>
+
+              <!-- REAL-LIFE ANALOGY CALLOUT -->
+              <div class="analogy-box">
+                <div class="analogy-icon">
+                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                    <rect x="8" y="10" width="32" height="30" rx="3" fill="#1e293b" stroke="#0f172a" stroke-width="2"/>
+                    <rect x="12" y="14" width="24" height="22" rx="2" fill="#334155"/>
+                    <circle cx="20" cy="25" r="4.5" fill="#1e293b" stroke="#64748b" stroke-width="1"/>
+                    <circle cx="20" cy="25" r="2" fill="#22c55e"/>
+                    <rect x="29" y="18" width="4" height="3" rx="1" fill="#e2e8f0"/>
+                    <rect x="29" y="24" width="4" height="3" rx="1" fill="#e2e8f0"/>
+                    <rect x="29" y="30" width="4" height="3" rx="1" fill="#e2e8f0"/>
+                    <path d="M24 6l4 3v4c0 3-4 5-4 5s-4-2-4-5V9l4-3z" fill="#f59e0b"/>
+                  </svg>
+                </div>
+                <div class="analogy-content">
+                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · At-Rest Defense</span>
+                  <div class="analogy-title">The Front-Desk Master Safe</div>
+                  <div class="analogy-text">Student TOTP seeds are locked inside a titanium safe behind the front desk (backend RAM). Even if a burglar steals the database tables, all seed codes are Fernet-encrypted ciphertext, unreadable without the master key.</div>
+                </div>
+              </div>
+
+              <p style="margin-top: 8px;"><strong>Database Dump Immunity:</strong> Master Fernet key resides solely in backend environment RAM. Dumping PostgreSQL yields only encrypted seed blobs.</p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <footer class="slide-footer">
+
+        <span>RFC 6238 · RFC 4226 · Cryptography.io Fernet · Google RS256 Token Verification</span>
+
+        <span>Slide 07 / 12</span>
+
+      </footer>
+
+    </section>
+
+
+
+    <!-- ==================== SLIDE 8: PILLAR 3 - AVAILABILITY ==================== -->
+
+    <section class="slide" id="slide-8">
 
       <header class="slide-header">
 
@@ -1590,22 +2345,27 @@
 
 
 
-            <div class="spec-card">
-
-              <h3>
-
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;">
-
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
-
+            <!-- 8 RECOVERY CODES & REAL-LIFE ANALOGY -->
+            <div class="analogy-box" style="margin-top: 10px;">
+              <div class="analogy-icon">
+                <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                  <rect x="10" y="8" width="28" height="32" rx="3" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+                  <rect x="14" y="12" width="20" height="24" rx="1.5" fill="#ffffff" stroke="#fca5a5" stroke-width="1"/>
+                  <path d="M16 14l16 16" stroke="#f87171" stroke-width="0.8" stroke-dasharray="2 2"/>
+                  <circle cx="21" cy="21" r="4" stroke="#d97706" stroke-width="1.8" fill="#fef3c7"/>
+                  <circle cx="21" cy="21" r="1.5" fill="#b45309"/>
+                  <line x1="24.5" y1="23.5" x2="31" y2="30" stroke="#d97706" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="28" y1="27" x2="30" y2="25" stroke="#d97706" stroke-width="1.5"/>
+                  <line x1="30" y1="29" x2="32" y2="27" stroke="#d97706" stroke-width="1.5"/>
+                  <rect x="26" y="32" width="9" height="5" rx="1.5" fill="#dc2626"/>
+                  <text x="30.5" y="36" font-size="3.5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">8x</text>
                 </svg>
-
-                8 Disaster Recovery Codes
-
-              </h3>
-
-              <p>If a student loses or destroys their phone, 8 high-entropy one-time recovery codes (stored as SHA-256 digests) guarantee access recovery.</p>
-
+              </div>
+              <div class="analogy-content">
+                <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Availability</span>
+                <div class="analogy-title">The 8 Break-Glass Emergency Keys</div>
+                <div class="analogy-text">If a student loses their phone, 8 one-time codes (stored as SHA-256 hashes) act as emergency break-glass keys that dissolve once redeemed, guaranteeing permanent self-service recovery.</div>
+              </div>
             </div>
 
           </div>
@@ -1642,7 +2402,7 @@
 
         <span>Disaster Recovery Tolerance · Sliding Rate Limits</span>
 
-        <span>Slide 05 / 08</span>
+        <span>Slide 08 / 12</span>
 
       </footer>
 
@@ -1650,9 +2410,9 @@
 
 
 
-    <!-- ==================== SLIDE 6: ANTI-MITM SAFETY NUMBERS ==================== -->
+    <!-- ==================== SLIDE 9: ANTI-MITM SAFETY NUMBERS ==================== -->
 
-    <section class="slide" id="slide-6">
+    <section class="slide" id="slide-9">
 
       <header class="slide-header">
 
@@ -1728,6 +2488,33 @@
 
             </ul>
 
+            <!-- REAL-LIFE ANALOGY CALLOUT -->
+            <div class="analogy-box" style="margin-top: 14px;">
+              <div class="analogy-icon">
+                <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+                  <path d="M8 8h12v32H8V8z" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+                  <path d="M20 8l-2 5 3 4-2 6 3 5-2 6 3 6" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="10" y1="14" x2="16" y2="14" stroke="#a16207" stroke-width="1.2"/>
+                  <line x1="10" y1="20" x2="16" y2="20" stroke="#a16207" stroke-width="1.2"/>
+                  <line x1="10" y1="26" x2="15" y2="26" stroke="#a16207" stroke-width="1.2"/>
+                  <text x="9.5" y="34" font-size="3.5" font-family="monospace" font-weight="bold" fill="#0f766e">8492</text>
+                  <path d="M27 8h13v32H27V8z" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.2"/>
+                  <path d="M27 8l-2 5 3 4-2 6 3 5-2 6 3 6" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/>
+                  <line x1="30" y1="14" x2="38" y2="14" stroke="#a16207" stroke-width="1.2"/>
+                  <line x1="30" y1="20" x2="37" y2="20" stroke="#a16207" stroke-width="1.2"/>
+                  <line x1="30" y1="26" x2="36" y2="26" stroke="#a16207" stroke-width="1.2"/>
+                  <text x="30" y="34" font-size="3.5" font-family="monospace" font-weight="bold" fill="#0f766e">1057</text>
+                  <circle cx="23.5" cy="40" r="4" fill="#16a34a"/>
+                  <path d="M21.5 40l1.5 1.5 3-3" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="analogy-content">
+                <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Daily Life Analogy · Anti-MITM</span>
+                <div class="analogy-title">The Matching Torn Receipt Halves</div>
+                <div class="analogy-text">Alice and Bob each hold half of a uniquely torn paper receipt. When meeting in class, they fit the jagged edges together. If the tear line and 60 digits match down to the fiber, they have absolute proof no rogue server admin swapped their keys.</div>
+              </div>
+            </div>
+
           </div>
 
 
@@ -1762,7 +2549,7 @@
 
         <span>Deterministic Key Fingerprinting · Man-in-the-Middle Defense</span>
 
-        <span>Slide 06 / 08</span>
+        <span>Slide 09 / 12</span>
 
       </footer>
 
@@ -1770,9 +2557,179 @@
 
 
 
-    <!-- ==================== SLIDE 7: HEAD-TO-HEAD MATRIX ==================== -->
+    <!-- ==================== SLIDE 10: MASTER CRYPTOGRAPHIC MATRIX ==================== -->
 
-    <section class="slide" id="slide-7">
+    <section class="slide" id="slide-10">
+
+      <header class="slide-header">
+
+        <div class="brand"><span class="brandmark">D</span> DUETCLOCK</div>
+
+        <span class="slide-badge">Cryptographic Specifications</span>
+
+      </header>
+
+      <div class="slide-content">
+
+        <span class="eyebrow">STANDARDS COMPLIANCE &amp; ARCHITECTURAL PARAMETERS</span>
+
+        <h2 style="margin-bottom: 12px;">Master Cryptographic Primitives Reference Matrix</h2>
+
+        <table class="spec-table">
+
+          <thead>
+
+            <tr>
+
+              <th style="width: 17%;">Cryptographic Layer</th>
+
+              <th style="width: 21%;">Algorithm / Primitive</th>
+
+              <th style="width: 22%;">Key Size &amp; Parameters</th>
+
+              <th style="width: 25%;">Security Guarantee</th>
+
+              <th style="width: 15%;">Standard / RFC</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr>
+
+              <td><strong>Message Encryption</strong></td>
+
+              <td><code>AES-256-GCM</code></td>
+
+              <td>256-bit key, 96-bit random IV, 128-bit tag</td>
+
+              <td>Payload confidentiality &amp; AEAD tamper resistance</td>
+
+              <td>NIST SP 800-38D</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>Key Encapsulation</strong></td>
+
+              <td><code>RSA-OAEP</code></td>
+
+              <td>2048-bit modulus, <code>e=65537</code>, SHA-256</td>
+
+              <td>Dual-envelope asymmetric wrapping (Alice &amp; Bob)</td>
+
+              <td>RFC 8017 (PKCS#1)</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>Key Derivation (KDF)</strong></td>
+
+              <td><code>PBKDF2-HMAC-SHA256</code></td>
+
+              <td>600,000 iterations, 16-byte random salt</td>
+
+              <td>Password-derived client private key wrapping</td>
+
+              <td>RFC 8018 / OWASP '24</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>Second Factor (2FA)</strong></td>
+
+              <td><code>RFC 6238 TOTP</code></td>
+
+              <td>HMAC-SHA-1, 160-bit seed, 30s step, 6 digits</td>
+
+              <td>Out-of-band identity attestation; monotonic replay fencing</td>
+
+              <td>RFC 6238 / RFC 4226</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>At-Rest Secret Shield</strong></td>
+
+              <td><code>Fernet</code></td>
+
+              <td>AES-128-CBC + HMAC-SHA-256 signature</td>
+
+              <td>Server-side database dump isolation for TOTP seeds</td>
+
+              <td>PyCA Fernet Spec</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>First-Factor Identity</strong></td>
+
+              <td><code>RS256 JWT Verification</code></td>
+
+              <td>2048-bit RSA + Google rotating x509 certs</td>
+
+              <td>Cryptographic email &amp; institutional domain attestation</td>
+
+              <td>RFC 7515 / RFC 7519</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>Anti-MITM Verification</strong></td>
+
+              <td><code>Iterative SHA-256 Hashing</code></td>
+
+              <td>5,000 rounds over lexicographically sorted keys</td>
+
+              <td>60-digit pairwise identity fingerprint verification</td>
+
+              <td>NIST FIPS 180-4</td>
+
+            </tr>
+
+            <tr>
+
+              <td><strong>Sessions &amp; Recovery</strong></td>
+
+              <td><code>SHA-256 Digests</code></td>
+
+              <td>256-bit session tickets, 64-bit recovery codes</td>
+
+              <td>Pre-image resistant one-time token redemption</td>
+
+              <td>NIST FIPS 180-4</td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <footer class="slide-footer">
+
+        <span>Formal Cryptographic Specification Matrix · Zero Unauthenticated Primitives</span>
+
+        <span>Slide 10 / 12</span>
+
+      </footer>
+
+    </section>
+
+
+
+    <!-- ==================== SLIDE 11: HEAD-TO-HEAD MATRIX ==================== -->
+
+    <section class="slide" id="slide-11">
 
       <header class="slide-header">
 
@@ -1876,8 +2833,27 @@
 
         </table>
 
-        <div style="margin-top: 14px; padding: 10px 14px; background: #fffefa; border: 1px solid var(--line); border-radius: 6px; font-size: 11.5px; color: var(--muted); line-height: 1.45;">
-          <strong style="color: var(--ink);">Honest Security Model:</strong> Protects confidentiality against a <strong>database-only leak</strong> (an attacker or rogue DB admin who dumps Supabase sees only encrypted ciphertext). It does <em>not</em> claim protection against a malicious server, which sees routing metadata (who messages whom and when) and could observe login passwords to derive key-wrapping keys.
+        <!-- HONEST SECURITY MODEL & ANALOGY CALLOUT -->
+        <div class="analogy-box" style="margin-top: 14px; background: #fffefa;">
+          <div class="analogy-icon">
+            <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+              <path d="M6 10h16v28H6V10z" fill="#334155" stroke="#1e293b" stroke-width="1.5"/>
+              <circle cx="14" cy="24" r="6" stroke="#94a3b8" stroke-width="1.8" fill="#1e293b"/>
+              <circle cx="14" cy="24" r="2.5" fill="#d97706"/>
+              <rect x="4" y="16" width="3" height="3" rx="0.5" fill="#f59e0b"/>
+              <rect x="4" y="29" width="3" height="3" rx="0.5" fill="#f59e0b"/>
+              <path d="M26 10h16v28H26V10z" fill="#f8fafc" stroke="#64748b" stroke-width="1.5"/>
+              <rect x="29" y="13" width="10" height="13" rx="1" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+              <circle cx="34" cy="20" r="1.5" fill="#64748b"/>
+              <rect x="24" y="29" width="19" height="3" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.8"/>
+              <rect x="31" y="27" width="6" height="4" rx="0.8" fill="#15803d"/>
+            </svg>
+          </div>
+          <div class="analogy-content">
+            <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Honest Threat Model &amp; Analogy</span>
+            <div class="analogy-title">The Bank Vault vs. The Window Teller</div>
+            <div class="analogy-text"><strong>Database-Blind Protection:</strong> DUETCLOCK is like a reinforced bank vault&mdash;if robbers dynamite the vault door (SQL dump), all safety deposit boxes are locked with student keys they do not possess. However, the active server is like the window teller: if the teller is corrupt, they can see who deposits money and observe login passwords. We honestly protect against a vault heist, not a malicious teller.</div>
+          </div>
         </div>
 
       </div>
@@ -1888,7 +2864,7 @@
 
         <span>Formal Security Analysis · Threat Model STRIDE</span>
 
-        <span>Slide 07 / 08</span>
+        <span>Slide 11 / 12</span>
 
       </footer>
 
@@ -1896,9 +2872,9 @@
 
 
 
-    <!-- ==================== SLIDE 8: SUMMARY & DEMO ==================== -->
+    <!-- ==================== SLIDE 12: SUMMARY & DEMO ==================== -->
 
-    <section class="slide" id="slide-8">
+    <section class="slide" id="slide-12">
 
       <header class="slide-header">
 
@@ -2022,7 +2998,7 @@
 
         <span>Dawood University of Engineering &amp; Technology · Thank You!</span>
 
-        <span>Slide 08 / 08</span>
+        <span>Slide 12 / 12</span>
 
       </footer>
 
@@ -2040,7 +3016,7 @@
 
     let currentSlide = 1;
 
-    const totalSlides = 8;
+    const totalSlides = 12;
 
 
 
