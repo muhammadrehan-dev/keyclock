@@ -124,6 +124,37 @@
 
 
 
+    
+    /* Full-Page Meme Slides */
+    .meme-slide {
+      padding: 24px 36px 18px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      background: var(--paper) !important;
+    }
+
+    .full-meme-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #0d1512;
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 40px rgba(22, 54, 46, 0.12);
+    }
+
+    .full-meme-img {
+      max-width: 100%;
+      max-height: 620px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+
     /* Universal Print Color Enforcement (Preserves All Backgrounds & Colors) */
 
     *, *::before, *::after {
@@ -1262,6 +1293,85 @@
 
 
 
+    
+    /* 4-Panel Meme Grid */
+    .meme-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      height: 100%;
+    }
+
+    .meme-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 14px rgba(22, 54, 46, 0.05);
+    }
+
+    .meme-badge {
+      display: inline-block;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--green);
+      background: var(--green-light);
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      align-self: flex-start;
+    }
+
+    .meme-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .meme-img-box {
+      width: 100%;
+      height: 220px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0f1923;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      border: 1px solid #dce2d7;
+    }
+
+    .meme-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .meme-desc {
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .meme-takeaway {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--line);
+      font-size: 10px;
+      color: #124d2b;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
     /* Floating UI Navigation for Web Browser Mode */
 
     .nav-controls {
@@ -1340,13 +1450,13 @@
 
   <aside class="nav-controls" aria-label="Deck controls">
 
-    <span>DUETCLOCK Slides (1–12)</span>
+    <span>DUETCLOCK Slides (1–15)</span>
 
     <button class="nav-btn" onclick="scrollToSlide(-1)">↑ Prev</button>
 
     <button class="nav-btn" onclick="scrollToSlide(1)">↓ Next</button>
 
-    <button class="nav-btn" onclick="window.print()" title="Export Pixel-Perfect PDF" style="background: #1d5743;">🖨️ Export PDF</button>
+    <button class="nav-btn" onclick="window.print()" title="Export Pixel-Perfect PDF" style="background: #1d5743; display: inline-flex; align-items: center; gap: 6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Export PDF</button>
 
   </aside>
 
@@ -1354,11 +1464,7 @@
 
   <div class="deck-container">
 
-
-
-    <!-- ==================== SLIDE 1: TITLE & COVER ==================== -->
-
-    <section class="slide" id="slide-1">
+<section class="slide" id="slide-1">
 
       <header class="slide-header">
 
@@ -1432,17 +1538,13 @@
 
         <span>Dawood University of Engineering &amp; Technology · Information Security</span>
 
-        <span>Slide 01 / 12</span>
+        <span>Slide 01 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 2: THE INDUSTRY DILEMMA ==================== -->
-
-    <section class="slide" id="slide-2">
+<section class="slide" id="slide-2">
 
       <header class="slide-header">
 
@@ -1484,9 +1586,9 @@
 
                 <div>
 
-                  <strong>Telegram's Dangerous Default:</strong>
+                  <strong>Telegram's Cloud Architecture:</strong>
 
-                  All standard 1-on-1 and group chats are stored in decrypted form on Telegram servers. The server holds the decryption keys.
+                  Standard chats prioritize seamless multi-device cloud synchronization over client-side encryption. The cloud servers hold decryption keys for standard chats, while end-to-end encryption is restricted to optional Secret Chats.
 
                 </div>
 
@@ -1568,17 +1670,13 @@
 
         <span>Confidentiality, Integrity, Availability Defense Deck</span>
 
-        <span>Slide 02 / 12</span>
+        <span>Slide 02 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 3: PILLAR 1 - CONFIDENTIALITY ==================== -->
-
-    <section class="slide" id="slide-3">
+<section class="slide" id="slide-3">
 
       <header class="slide-header">
 
@@ -1680,17 +1778,23 @@
 
         <span>Web Crypto API · NIST Standard Algorithms</span>
 
-        <span>Slide 03 / 12</span>
+        <span>Slide 03 / 15</span>
 
       </footer>
 
     </section>
 
+<section class="slide meme-slide" id="slide-4">
+      <div class="full-meme-container" style="background: #000000;">
+        <img src="presentation_images/meme_anakin_padme_key.png" alt="Anakin & Padme Public vs Private Key Meme" class="full-meme-img">
+      </div>
+      <footer class="slide-footer" style="margin-top: 10px;">
+        <span>InfoSec Reality Check · The Cardinal Rule of Asymmetric Cryptography</span>
+        <span class="slide-num">Slide 04 / 15</span>
+      </footer>
+    </section>
 
-
-    <!-- ==================== SLIDE 4: DEEP DIVE - DUAL-ENVELOPE E2EE ==================== -->
-
-    <section class="slide" id="slide-4">
+<section class="slide" id="slide-5">
 
       <header class="slide-header">
 
@@ -1764,25 +1868,15 @@ K_sender    = RSA-OAEP_{Pub_sender}(K_msg)
 Payload = "E2EE:" + JSON({ v:1, iv: IV, key: K_recipient, ct: C_body })
               </div>
 
-              <!-- REAL-LIFE ANALOGY CALLOUT -->
-              <div class="analogy-box">
-                <div class="analogy-icon">
-                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                    <path d="M18 13v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
-                    <rect x="6" y="13" width="36" height="25" rx="3" fill="#475569" stroke="#1e293b" stroke-width="2"/>
-                    <line x1="6" y1="25" x2="42" y2="25" stroke="#94a3b8" stroke-width="1.5"/>
-                    <rect x="13" y="27" width="9" height="7" rx="1.5" fill="#d97706" stroke="#92400e" stroke-width="1"/>
-                    <path d="M15 27v-2.5a2.5 2.5 0 0 1 5 0V27" stroke="#b45309" stroke-width="1.5"/>
-                    <text x="17.5" y="32.5" font-size="4.5" font-weight="bold" fill="#fff" text-anchor="middle" font-family="sans-serif">A</text>
-                    <rect x="26" y="27" width="9" height="7" rx="1.5" fill="#d97706" stroke="#92400e" stroke-width="1"/>
-                    <path d="M28 27v-2.5a2.5 2.5 0 0 1 5 0V27" stroke="#b45309" stroke-width="1.5"/>
-                    <text x="30.5" y="32.5" font-size="4.5" font-weight="bold" fill="#fff" text-anchor="middle" font-family="sans-serif">B</text>
-                  </svg>
+              <!-- VIRAL MEME IN CONTEXT: Anakin & Padme (Public vs Private Key) -->
+              <div class="analogy-box" style="margin-top: 8px; padding: 6px 10px; background: #fffdf5; border-color: #ffe58f; border-left-color: #d48806;">
+                <div class="analogy-icon" style="width: 44px; height: 44px; background: #000; border: 1.5px solid #d48806; overflow: hidden; padding: 1px; border-radius: 6px;">
+                  <img src="presentation_images/meme_anakin_padme_key.png" alt="Anakin Padme Public vs Private Key Meme" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="analogy-content">
-                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Real-Life Analogy · Dual Envelope</span>
-                  <div class="analogy-title">Titanium Case &amp; Two Padlocks</div>
-                  <div class="analogy-text">Alice locks the message in a titanium briefcase with a 1-time combination. She duplicates the combo into two brass boxes&mdash;one locked with Bob&rsquo;s padlock, one with her own. The server moves the case; only Bob or Alice can unlock their box to read it.</div>
+                  <span class="analogy-tag" style="color: #b45309;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Classic Meme · Public vs Private Key</span>
+                  <div class="analogy-title" style="color: #b45309;">"You Mean the PUBLIC Key, Right?"</div>
+                  <div class="analogy-text">The classic developer panic: pushing private keys to the cloud. In DUETCLOCK, students share only their <strong>public keys</strong> for key encapsulation. Raw private keys never leave local browser memory!</div>
                 </div>
               </div>
 
@@ -1800,17 +1894,23 @@ Payload = "E2EE:" + JSON({ v:1, iv: IV, key: K_recipient, ct: C_body })
 
         <span>Hybrid Envelope Cryptography · W3C SubtleCrypto API · RFC 8017 / NIST SP 800-38D</span>
 
-        <span>Slide 04 / 12</span>
+        <span>Slide 05 / 15</span>
 
       </footer>
 
     </section>
 
+<section class="slide meme-slide" id="slide-6">
+      <div class="full-meme-container" style="background: #0d1512;">
+        <img src="presentation_images/meme_private_key_4.png" alt="Viral eMudhra Private Key = 4 Blunder" class="full-meme-img">
+      </div>
+      <footer class="slide-footer" style="margin-top: 10px;">
+        <span>InfoSec Reality Check · When Centralized Certificate Authorities Fail (eMudhra CA Blunder)</span>
+        <span class="slide-num">Slide 06 / 15</span>
+      </footer>
+    </section>
 
-
-    <!-- ==================== SLIDE 5: DEEP DIVE - KEY CUSTODY & PBKDF2 ==================== -->
-
-    <section class="slide" id="slide-5">
+<section class="slide" id="slide-7">
 
       <header class="slide-header">
 
@@ -1943,25 +2043,15 @@ importKey('jwk', jwk, ..., extractable: false, ['decrypt'])
 sessionStorage.removeItem(key)
               </div>
 
-              <!-- REAL-LIFE ANALOGY CALLOUT -->
-              <div class="analogy-box" style="margin-top: 6px; padding: 6px 10px;">
-                <div class="analogy-icon" style="width: 38px; height: 38px;">
-                  <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
-                    <rect x="6" y="11" width="36" height="26" rx="3.5" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
-                    <rect x="6" y="16" width="36" height="4" fill="#059669"/>
-                    <rect x="11" y="24" width="9" height="7.5" rx="1" fill="#eab308" stroke="#ca8a04" stroke-width="0.8"/>
-                    <line x1="14" y1="24" x2="14" y2="31.5" stroke="#a16207" stroke-width="0.7"/>
-                    <line x1="17" y1="24" x2="17" y2="31.5" stroke="#a16207" stroke-width="0.7"/>
-                    <line x1="11" y1="27.5" x2="20" y2="27.5" stroke="#a16207" stroke-width="0.7"/>
-                    <rect x="29" y="24" width="10" height="8" rx="1.5" fill="#15803d" stroke="#166534" stroke-width="1"/>
-                    <path d="M31.5 24v-2.5a2.5 2.5 0 0 1 5 0V24" stroke="#15803d" stroke-width="1.3"/>
-                    <circle cx="34" cy="27.5" r="1" fill="#ffffff"/>
-                  </svg>
+              <!-- VIRAL MEME IN CONTEXT: eMudhra Private Key = 4 -->
+              <div class="analogy-box" style="margin-top: 6px; padding: 6px 10px; background: #fff5f5; border-color: #ffccc7; border-left-color: #be2e15;">
+                <div class="analogy-icon" style="width: 44px; height: 44px; background: #18231e; border: 1.5px solid #be2e15; overflow: hidden; padding: 1px; border-radius: 6px;">
+                  <img src="presentation_images/meme_private_key_4.png" alt="Viral eMudhra Private Key = 4 Meme" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="analogy-content">
-                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Memory Isolation</span>
-                  <div class="analogy-title">Smart Chip on Bank Card</div>
-                  <div class="analogy-text">An ATM card&rsquo;s gold chip signs transactions internally&mdash;no skimmer can export raw keys. DUETCLOCK locks the key in non-extractable RAM and wipes it immediately on tab close.</div>
+                  <span class="analogy-tag" style="color: #be2e15;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Real Blunder · The "Private Key = 4"</span>
+                  <div class="analogy-title" style="color: #be2e15;">eMudhra CA Blunder (Oct 2026)</div>
+                  <div class="analogy-text">A major Certificate Authority actually shipped root certificates with <strong>private_key = 4</strong> (brute-forced in 0.000001s). DUETCLOCK avoids weak keys via WebCrypto hardware PRNG &amp; memory locking (<code>extractable: false</code>).</div>
                 </div>
               </div>
 
@@ -1979,17 +2069,13 @@ sessionStorage.removeItem(key)
 
         <span>Key Derivation &amp; Memory Protection · RFC 8018 · W3C SubtleCrypto</span>
 
-        <span>Slide 05 / 12</span>
+        <span>Slide 07 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 6: PILLAR 2 - INTEGRITY & AEAD ==================== -->
-
-    <section class="slide" id="slide-6">
+<section class="slide" id="slide-8">
 
       <header class="slide-header">
 
@@ -2133,17 +2219,23 @@ sessionStorage.removeItem(key)
 
         <span>AEAD Integrity Validation · Monotonic Replay Fencing</span>
 
-        <span>Slide 06 / 12</span>
+        <span>Slide 08 / 15</span>
 
       </footer>
 
     </section>
 
+<section class="slide meme-slide" id="slide-9">
+      <div class="full-meme-container" style="background: #ffffff;">
+        <img src="presentation_images/meme_xkcd_security_full.png" alt="XKCD 538 The $5 Pipe Wrench Attack" class="full-meme-img">
+      </div>
+      <footer class="slide-footer" style="margin-top: 10px;">
+        <span>InfoSec Reality Check · Threat Model STRIDE &amp; Why Passwords Alone Are Never Enough</span>
+        <span class="slide-num">Slide 09 / 15</span>
+      </footer>
+    </section>
 
-
-    <!-- ==================== SLIDE 7: DEEP DIVE - TOTP & FERNET ==================== -->
-
-    <section class="slide" id="slide-7">
+<section class="slide" id="slide-10">
 
       <header class="slide-header">
 
@@ -2180,28 +2272,15 @@ BinaryCode = (Hash[Offset..Offset+3] &amp; 0x7FFFFFFF)
 OTP = (BinaryCode mod 1,000,000).padStart(6, '0')
               </div>
 
-              <!-- REAL-LIFE ANALOGY CALLOUT -->
-              <div class="analogy-box">
-                <div class="analogy-icon">
-                  <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-                    <circle cx="16" cy="26" r="10" fill="#fffbeb" stroke="#b45309" stroke-width="1.6"/>
-                    <rect x="14" y="12" width="4" height="4" rx="1" fill="#b45309"/>
-                    <line x1="16" y1="26" x2="16" y2="19" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/>
-                    <line x1="16" y1="26" x2="20" y2="23" stroke="#92400e" stroke-width="1.2" stroke-linecap="round"/>
-                    <circle cx="16" cy="26" r="1.5" fill="#d97706"/>
-                    <circle cx="32" cy="26" r="10" fill="#fffbeb" stroke="#b45309" stroke-width="1.6"/>
-                    <rect x="30" y="12" width="4" height="4" rx="1" fill="#b45309"/>
-                    <line x1="32" y1="26" x2="32" y2="19" stroke="#92400e" stroke-width="1.5" stroke-linecap="round"/>
-                    <line x1="32" y1="26" x2="36" y2="23" stroke="#92400e" stroke-width="1.2" stroke-linecap="round"/>
-                    <circle cx="32" cy="26" r="1.5" fill="#d97706"/>
-                    <rect x="19" y="36" width="10" height="6" rx="2" fill="#15803d"/>
-                    <text x="24" y="40.5" font-size="4" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">30s</text>
-                  </svg>
+              <!-- VIRAL MEME IN CONTEXT: XKCD 538 Security Wrench -->
+              <div class="analogy-box" style="margin-top: 8px; padding: 6px 10px; background: #f0f7ff; border-color: #bae0ff; border-left-color: #1890ff;">
+                <div class="analogy-icon" style="width: 44px; height: 44px; background: #ffffff; border: 1.5px solid #91caff; overflow: hidden; padding: 1px; border-radius: 6px;">
+                  <img src="presentation_images/meme_xkcd_security.png" alt="XKCD 538 Security Wrench Meme" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="analogy-content">
-                  <span class="analogy-tag"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> Analogy · Second Factor</span>
-                  <div class="analogy-title">Synchronized Swiss Watches</div>
-                  <div class="analogy-text">Alice and DUETCLOCK hold mechanical watches ticking in lockstep. Every 30s, the gear clicks and reveals the same 6-digit code&mdash;zero cellular/SMS needed. The backend turnstile records the tick so used codes can never be replayed.</div>
+                  <span class="analogy-tag" style="color: #0958d9;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/></svg> XKCD #538 · Threat Model Reality</span>
+                  <div class="analogy-title" style="color: #0958d9;">4096-Bit RSA vs. The $5 Pipe Wrench</div>
+                  <div class="analogy-text">Cryptographers design uncrackable math, but real attackers drug the user and hit them with a $5 wrench until they talk. RFC 6238 TOTP requires an offline physical phone token, defeating password extortion.</div>
                 </div>
               </div>
 
@@ -2265,17 +2344,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>RFC 6238 · RFC 4226 · Cryptography.io Fernet · Google RS256 Token Verification</span>
 
-        <span>Slide 07 / 12</span>
+        <span>Slide 10 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 8: PILLAR 3 - AVAILABILITY ==================== -->
-
-    <section class="slide" id="slide-8">
+<section class="slide" id="slide-11">
 
       <header class="slide-header">
 
@@ -2402,17 +2477,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>Disaster Recovery Tolerance · Sliding Rate Limits</span>
 
-        <span>Slide 08 / 12</span>
+        <span>Slide 11 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 9: ANTI-MITM SAFETY NUMBERS ==================== -->
-
-    <section class="slide" id="slide-9">
+<section class="slide" id="slide-12">
 
       <header class="slide-header">
 
@@ -2450,9 +2521,9 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
                 <div>
 
-                  <strong>The Man-In-The-Middle Threat:</strong>
+                  <strong>The Man-In-The-Middle &amp; PKI Dilemma:</strong>
 
-                  In standard PKI, a rogue database administrator could swap Alice's public key with Mallory's key to intercept messages.
+                  Centralized Certificate Authorities can fail or blunder catastrophically (like eMudhra literally issuing <code>private_key = 4</code>), and a rogue DB admin could swap Alice's public key with Mallory's key.
 
                 </div>
 
@@ -2549,17 +2620,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>Deterministic Key Fingerprinting · Man-in-the-Middle Defense</span>
 
-        <span>Slide 09 / 12</span>
+        <span>Slide 12 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 10: MASTER CRYPTOGRAPHIC MATRIX ==================== -->
-
-    <section class="slide" id="slide-10">
+<section class="slide" id="slide-13">
 
       <header class="slide-header">
 
@@ -2719,17 +2786,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>Formal Cryptographic Specification Matrix · Zero Unauthenticated Primitives</span>
 
-        <span>Slide 10 / 12</span>
+        <span>Slide 13 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 11: HEAD-TO-HEAD MATRIX ==================== -->
-
-    <section class="slide" id="slide-11">
+<section class="slide" id="slide-14">
 
       <header class="slide-header">
 
@@ -2773,7 +2836,7 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
               <td><strong>Default E2EE</strong></td>
 
-              <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>NOT by default</span><br><small>Cloud chats store server-side keys</small></td>
+              <td><span style="color:#c28814; font-weight:700;">Optional (Secret Chats)</span><br><small>Cloud chats use server-side MTProto keys for multi-device sync</small></td>
 
               <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Default E2EE</span><br><small>Signal Protocol</small></td>
 
@@ -2785,7 +2848,7 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
               <td><strong>Cryptographic Standards</strong></td>
 
-              <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Proprietary &ldquo;MTProto&rdquo;</span><br><small>Custom non-standard MAC</small></td>
+              <td><span style="color:#2563eb; font-weight:700;">MTProto 2.0</span><br><small>Proprietary protocol designed for high-speed cloud sync</small></td>
 
               <td><span class="badge-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg>Signal Protocol</span><br><small>Double Ratchet (Signal)</small></td>
 
@@ -2797,7 +2860,7 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
               <td><strong>Server Trust Model</strong></td>
 
-              <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Complete Server Trust</span><br><small>Telegram holds message keys</small></td>
+              <td><span style="color:#c28814; font-weight:700;">Cloud Server Custody</span><br><small>Server manages keys to enable web/desktop sync</small></td>
 
               <td><span class="badge-cross"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="margin-right:4px; vertical-align:-1px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Closed Trust Model</span><br><small>Meta manages closed key distribution</small></td>
 
@@ -2864,17 +2927,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>Formal Security Analysis · Threat Model STRIDE</span>
 
-        <span>Slide 11 / 12</span>
+        <span>Slide 14 / 15</span>
 
       </footer>
 
     </section>
 
-
-
-    <!-- ==================== SLIDE 12: SUMMARY & DEMO ==================== -->
-
-    <section class="slide" id="slide-12">
+<section class="slide" id="slide-15">
 
       <header class="slide-header">
 
@@ -2998,17 +3057,13 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
         <span>Dawood University of Engineering &amp; Technology · Thank You!</span>
 
-        <span>Slide 12 / 12</span>
+        <span>Slide 15 / 15</span>
 
       </footer>
 
     </section>
 
-
-
   </div>
-
-
 
   <script>
 
@@ -3016,7 +3071,7 @@ assert claims['email_verified'] == true &amp;&amp; claims['email'].endswith('@st
 
     let currentSlide = 1;
 
-    const totalSlides = 12;
+    const totalSlides = 15;
 
 
 
